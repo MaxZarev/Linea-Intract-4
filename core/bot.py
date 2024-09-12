@@ -17,9 +17,9 @@ class Bot:
 
     def __init__(self, account: Account):
         self.ads: Ads = Ads(account)
-        self.zeroland = Zeroland(account.private_key)
-        self.wowmax = Wowmax(account.private_key)
-        self.nile = Nile(account.private_key, self.wowmax)
+        self.zeroland = Zeroland(account)
+        self.wowmax = Wowmax(account)
+        self.nile = Nile(account, self.wowmax)
 
     async def run(self) -> None:
 
@@ -38,7 +38,7 @@ class Bot:
         await self.check_statuses(quests)
         await self.run_quests(quests)
 
-        logger.info(f"{self.ads.profile_number}: All quests are completed")
+        logger.info(f"{self.ads.profile_number}: Все квесты выполнены")
 
 
     async def shuffle_quest(self, quests: list[Quest]) -> None:
@@ -71,16 +71,15 @@ class Bot:
         for _ in range(3):
             try:
                 for quest in quests:
-                    logger.info(f"{self.ads.profile_number}: run quest {quest.number} {quest.text}")
+                    logger.info(f"{self.ads.profile_number}: Запускаем квест {quest.number} {quest.text}")
                     run_quest = getattr(self, f'quest_{quest.number}')
                     await run_quest(quest.number, quest.text)
                 return
             except Exception as e:
-                logger.error(f"{self.ads.profile_number}: Error {e}")
+                logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
 
 
     async def quest_1(self, quest_number: int, quest_text: str):
-        logger.info(f"{self.ads.profile_number}: run quest {quest_number} {quest_text}")
         if not await Accounts.get_status(self.ads.profile_number, 1):
             await self.nile.add_liquidity_eth(Tokens.ZERO)
             await self.interact_quest(quest_number, quest_text)
@@ -112,7 +111,9 @@ class Bot:
         except Exception:
             await self.open_interact()
         await random_sleep(3, 5)
+
         if await self.ads.page.get_by_text('Sign In').count() > 0:
+            logger.info(f"{self.ads.profile_number}: Запускаем подключение кошелька")
             await self.ads.page.get_by_text('Sign In').click()
             await self.ads.metamask.connect(self.ads.page.locator('//div[text()="MetaMask"]'))
             await asyncio.sleep(5)

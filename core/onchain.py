@@ -13,20 +13,21 @@ from web3.types import TxParams, TxReceipt, Wei
 
 from core.okx import OKX
 from loader import config
-from models import ContractTemp
+from models import ContractTemp, Account
 
 
 class Onchain:
-    def __init__(self, private_key: str):
-        self.private_key = private_key
+    def __init__(self, account: Account):
+        self.profile_number = account.profile_number
+        self.private_key = account.private_key
         self.w3: AsyncWeb3 = AsyncWeb3(
             provider=AsyncWeb3.AsyncHTTPProvider(
                 endpoint_uri=config.rpc_linea,
             ),
             modules={'eth': (AsyncEth,)},
         )
-        self.address = self.w3.eth.account.from_key(private_key).address
-        self.okx = OKX()
+        self.address = self.w3.eth.account.from_key(account.private_key).address
+        self.okx = OKX(account)
 
     async def get_balance(self, token: Optional[ContractTemp] = None) -> Amount:
         if not token:

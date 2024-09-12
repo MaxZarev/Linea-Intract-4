@@ -22,11 +22,11 @@ def read_file(
         convert_to_int: bool = False,
 ) -> list[str] | list[int] | dict:
     if not os.path.exists(file_path):
-        logger.error(f"File not found: {file_path}")
+        logger.error(f"Файл не найден: {file_path}")
         exit(1)
 
     if check_empty and os.stat(file_path).st_size == 0:
-        logger.error(f"File is empty: {file_path}")
+        logger.error(f"Файл пустой: {file_path}")
         exit(1)
 
     if is_yaml:
@@ -102,5 +102,5 @@ def get_eth_price() -> float:
             asyncio.sleep(5)
         except Exception:
             asyncio.sleep(5)
-    logger.error(f"Can't get eth price")
+    logger.error(f"Не можем получить цену ETH, ставим 2300")
     return 2300

@@ -36,15 +36,19 @@ class Ads:
         # установка прокси в ADS если включена
         if config.use_proxy:
             if self.proxy.host == "1.1.1.1":
-                logger.error(f'Error: {self.profile_number} Заполните файл с прокси или отключите использование прокси"')
+                logger.error(f'{self.profile_number}: Ошибка заполните файл с прокси или отключите использование прокси"')
                 exit()
             await self.set_proxy()
 
         # запуск и настройка браузера
-        self.browser = await self._start_browser()
-        self.context = self.browser.contexts[0]
-        self.page = self.context.pages[0]
-        await self._prepare_browser()
+        try:
+            self.browser = await self._start_browser()
+            self.context = self.browser.contexts[0]
+            self.page = self.context.pages[0]
+            await self._prepare_browser()
+        except Exception as e:
+            logger.error(f"{self.profile_number}: Ошибка при запуске и настройке браузера: {e}")
+            raise e
 
     async def _open_browser(self) -> str:
         """
@@ -91,6 +95,7 @@ class Ads:
             if attempts:
                 await asyncio.sleep(5)
                 return await self._start_browser(attempts - 1)
+            logger.error(f"{self.profile_number}: Error не удалось запустить браузер, после 3 попыток: {e}")
             raise e
 
     async def _prepare_browser(self) -> None:
@@ -98,9 +103,13 @@ class Ads:
         Закрывает все страницы кроме текущей
         :return: None
         """
-        for page in self.context.pages:
-            if page != self.page:
-                await page.close()
+        try:
+            for page in self.context.pages:
+                if page != self.page:
+                    await page.close()
+        except Exception as e:
+            logger.error(f"{self.profile_number}: Ошибка при закрытии страниц: {e}")
+            raise e
 
     async def close_browser(self) -> None:
         """
@@ -111,7 +120,11 @@ class Ads:
         url = self.local_api_url + 'browser/stop'
         async with lock:
             await random_sleep(1, 2)
-            await self.session.get(url, params=params)
+            try:
+                await self.session.get(url, params=params)
+            except Exception as e:
+                logger.error(f"{self.profile_number} Ошибка при остановке браузера: {e}")
+                raise e
 
     async def catch_page(self, url_contains: str, timeout: int = 10) -> Page:
         """
@@ -126,7 +139,8 @@ class Ads:
                 if url_contains in page.url:
                     return page
                 await asyncio.sleep(1)
-        raise Exception(f"Error: {self.profile_number} Страница не найдена: {url_contains}")
+        logger.error(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
+        raise Exception(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
 
     async def set_proxy(self) -> None:
         """
@@ -157,7 +171,7 @@ class Ads:
             try:
                 await self.session.get(config.link_change_ip)
             except:
-                logger.warning(f"Error: {self.profile_number} ошибка смены ip мобильного прокси")
+                logger.warning(f"{self.profile_number}: Ошибка смены ip мобильного прокси")
                 pass
 
     async def get_profile_id(self) -> str:
@@ -188,7 +202,7 @@ class Metamask:
         await self.ads.page.goto(self.url, wait_until='load')
         authorized_checker = self.ads.page.get_by_test_id('home__nfts-tab')
         if await authorized_checker.count() > 0:
-            logger.info(f"Авторизация в метамаске прошла успешно: {self.ads.profile_number}")
+            logger.info(f'{self.ads.profile_number}: Уже авторизован в метамаске')
             return
 
         await self.ads.page.get_by_test_id('unlock-password').fill(self.password)
@@ -197,11 +211,12 @@ class Metamask:
         await asyncio.sleep(5)
         if await self.ads.page.get_by_test_id('popover-close').count() > 0:
             await self.ads.page.get_by_test_id('popover-close').click()
+            logger.info(f'{self.ads.profile_number}: Авторизован в метамаске')
 
         if not await authorized_checker.count() > 0:
             raise Exception(f"Error: {self.ads.profile_number} Ошибка авторизации в метамаске")
 
-        logger.info(f"Авторизация в метамаске прошла успешно: {self.ads.profile_number}")
+        logger.info(f"{self.ads.profile_number}: Авторизация в метамаске прошла успешно")
 
     async def connect(self, locator: Locator) -> None:
         """

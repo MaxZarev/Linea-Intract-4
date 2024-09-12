@@ -5,10 +5,12 @@ import ccxt.async_support as ccxt
 from loguru import logger
 
 from loader import config
+from models import Account
 
 
 class OKX:
-    def __init__(self):
+    def __init__(self, account: Account):
+        self.profile_number = account.profile_number
         self.exchange = ccxt.okx({
             "apiKey": config.okx.get("okx_api_key"),
             "secret": config.okx.get("okx_secret_key"),
@@ -43,13 +45,13 @@ class OKX:
                 }
             )
             tx_id = response.get("id")
-            logger.info(f'{address} Выводим с okx {amount} {token}')
+            logger.info(f'{self.profile_number}: Выводим с okx {amount} {token}')
             await self.wait_confirm(tx_id)
-            logger.info(f'{address} Успешно выведено {amount} {token}')
+            logger.info(f'{self.profile_number}: Успешно выведено {amount} {token}')
             await self.exchange.close()
             return True
         except Exception as error:
-            logger.error(f'{address} Не удалось вывести {amount} {token}: {error} ')
+            logger.error(f'{self.profile_number}: Не удалось вывести {amount} {token}: {error} ')
             return False
         finally:
             await self.exchange.close()
@@ -77,8 +79,8 @@ class OKX:
         for _ in range(20):
             tx_info = await self.exchange.fetch_withdrawal(tx_id)
             if tx_info.get("status") == "ok":
-                logger.info(f"Транзакция {tx_id} завершена")
+                logger.debug(f"{self.profile_number}: Транзакция {tx_id} завершена")
                 return True
             await asyncio.sleep(10)
-        logger.error(f"Транзакция {tx_id} не завершена")
+        logger.error(f"{self.profile_number}: Ошибка транзакция {tx_id} не завершена")
         return False

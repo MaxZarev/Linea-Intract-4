@@ -10,13 +10,13 @@ from web3.types import TxParams
 from httpx import AsyncClient
 
 from core.onchain import Amount, Onchain, Contracts, Tokens
-from models import ContractTemp
+from models import ContractTemp, Account
 from utils.utils import random_amount, random_sleep, get_eth_price
 
 
 class Daps(Onchain):
-    def __init__(self, private_key: str):
-        super().__init__(private_key)
+    def __init__(self, account: Account):
+        super().__init__(account)
         self.eth_price = get_eth_price()
 
     async def get_swap_price(self, token: ContractTemp) -> Amount:
@@ -42,8 +42,8 @@ class Daps(Onchain):
 
 
 class Wowmax(Daps):
-    def __init__(self, private_key: str):
-        super().__init__(private_key)
+    def __init__(self, account: Account):
+        super().__init__(account)
 
     async def swap(self, from_token: ContractTemp, to_token: ContractTemp,
                    amount_from: Optional[Amount] = None) -> None:
@@ -61,7 +61,7 @@ class Wowmax(Daps):
             token_balance = await self.get_balance(from_token)
             token_price_in_eth = await self.get_swap_price(from_token)
             if token_balance.ether_float < 1 / token_price_in_eth.ether_float:
-                logger.warning(f"Balance is too low {token_balance}")
+                logger.warning(f"{self.profile_number}: Баланс токена меньше 1$ - {token_balance}, пропускаем свап")
                 return
             # даем апрув контракту на переданную сумму или на баланс токена
             if not amount_from:
@@ -84,7 +84,7 @@ class Wowmax(Daps):
         tx = await self.prepare_transaction(tx_params=tx_params, value=value.wei)
 
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"Swap: {tx_receipt['transactionHash'].hex()}")
+        logger.info(f"{self.profile_number}: Swap {from_token} - {to_token}: {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     @staticmethod
@@ -109,8 +109,8 @@ class Wowmax(Daps):
 
 
 class Nile(Daps):
-    def __init__(self, private_key: str, wowmax: Wowmax):
-        super().__init__(private_key)
+    def __init__(self, account: Account, wowmax: Wowmax):
+        super().__init__(account)
         self.wowmax = wowmax
 
     async def add_liquidity_eth(self, token: ContractTemp):
@@ -129,7 +129,7 @@ class Nile(Daps):
 
         # Если баланс lp токенов больше 15$ не добавляем ликвидность
         if lp_balance.ether_float > 15 / lp_price.ether_float:
-            logger.warning(f"LP balance is not empty {lp_balance}")
+            logger.warning(f"{self.profile_number}: Ликвидность уже добавлена  {lp_balance}")
             return
 
         # получаем баланс токена и цену токена в eth и usd
@@ -172,7 +172,7 @@ class Nile(Daps):
             int(deadline.timestamp())
         ).build_transaction(await self.prepare_transaction(value=amount_eth.wei))
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"Add liquidity: {tx_receipt['transactionHash'].hex()}")
+        logger.info(f"{self.profile_number} Добавление ликвидности в пул: {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     async def remove_liquidity(self, token: ContractTemp):
@@ -181,7 +181,7 @@ class Nile(Daps):
 
         lp_price = await self.get_lp_price(token)
         if balance_lp.ether_float < 0.5 / lp_price.ether_float:
-            logger.warning(f"Balance LP is too low {balance_lp}")
+            logger.warning(f"{self.profile_number}: Ликвидность уже выведена {balance_lp}")
             return
         await self.approve(lp_contract, Contracts.nile_router, balance_lp)
         reserves = await lp_contract.functions.getReserves().call()
@@ -204,7 +204,7 @@ class Nile(Daps):
             int(deadline.timestamp())
         ).build_transaction(await self.prepare_transaction())
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"Remove liquidity: {tx_receipt['transactionHash'].hex()}")
+        logger.info(f"{self.profile_number}: Ликвидность выведена {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     async def stake(self):
@@ -212,7 +212,7 @@ class Nile(Daps):
         # проверяем баланс стейка, если уже есть стейк, то не делаем новый
         stake_balance = await self.get_balance(Tokens.ZERO_LP_VOTING)
         if stake_balance.wei:
-            logger.warning(f"Stake balance is not empty {stake_balance}")
+            logger.warning(f"{self.profile_number}: Стейкинг уже сделан {stake_balance}")
             return
 
         # проверяем баланс lp токена
@@ -235,7 +235,7 @@ class Nile(Daps):
             True
         ).build_transaction(await self.prepare_transaction())
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"Stake: {tx_receipt['transactionHash'].hex()}")
+        logger.info(f"{self.profile_number}: Застейкали {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     async def get_lp_price(self, token: ContractTemp) -> Amount:
@@ -249,8 +249,8 @@ class Nile(Daps):
 
 
 class Zeroland(Daps):
-    def __init__(self, private_key: str):
-        super().__init__(private_key)
+    def __init__(self, account: Account):
+        super().__init__(account)
 
     async def supply_zerolend(self):
 
@@ -259,7 +259,7 @@ class Zeroland(Daps):
         token_contract = self.get_contract(Tokens.ZERO_ETH)
         zero_balance = Amount(await token_contract.functions.balanceOf(self.address).call(), wei=True)
         if zero_balance.ether_float > zero_min_amount.ether_float:
-            logger.info(f"{self.address}: Supply eth zerolend complete")
+            logger.info(f"{self.profile_number}: Уже добавили ликивдность в Zerolend ранее")
             return
 
         await self.balance_check_and_popup()
@@ -273,7 +273,7 @@ class Zeroland(Daps):
         ).build_transaction(await self.prepare_transaction(value=zero_min_amount.wei))
 
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"{self.address}: Supply eth zerolend {tx_receipt['transactionHash'].hex()}")
+        logger.info(f"{self.profile_number}: Добавили ликвидность в Zerolend {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     async def withdraw_zerolend(self):
@@ -284,7 +284,7 @@ class Zeroland(Daps):
         token_contract = self.get_contract(Tokens.ZERO_ETH)
         value = Amount(await token_contract.functions.balanceOf(self.address).call(), wei=True)
         if value.wei < 1e9:
-            logger.warning(f"{self.address} Balance is too low {value} for withdraw")
+            logger.warning(f"{self.profile_number}: Уже вывели ликвидность из Zerolend")
             return
 
         await self.approve(token_contract, Contracts.zerolend, value)
@@ -296,5 +296,5 @@ class Zeroland(Daps):
         ).build_transaction(
             await self.prepare_transaction())
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"{self.address}: Withdraw eth zerolend {tx_receipt['transactionHash'].hex()}")
+        logger.info(f"{self.profile_number}: Успешно вывели ликвидность из Zerolend {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
