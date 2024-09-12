@@ -1,0 +1,17 @@
+threads: 1 # укажите количество одновременных потоков
+
+okx:
+  okx_api_key: "" # укажите ключ API OKX
+  okx_secret_key: "" # укажите секретный ключ API OKX
+  okx_passphrase: "" # укажите пароль API OKX
+
+rpc_linea: https://1rpc.io/linea # укажите URL RPC Linea
+
+metamask_url: "chrome-extension://fffffffffffffffffffffffff/home.html" # укажите адрес метамаск в браузере
+
+gas_multiple: [1.5, 2.5] # множитель газа, для рандомизации
+zerolend_supply: [0.007, 0.009] # сумма supply в zeroland для 1 квеста
+
+use_proxy: true  # использовать прокси true/false
+is_mobile_proxy: true # использовать мобильный прокси true/false
+link_change_ip: "" # ссылка смены ip моб. прокси

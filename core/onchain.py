@@ -10,8 +10,8 @@ from web3 import AsyncWeb3
 from web3.contract import AsyncContract
 from web3.eth import AsyncEth
 from web3.types import TxParams, TxReceipt, Wei
-from httpx import AsyncClient
 
+from core.okx import OKX
 from loader import config
 from models import ContractTemp
 
@@ -26,6 +26,7 @@ class Onchain:
             modules={'eth': (AsyncEth,)},
         )
         self.address = self.w3.eth.account.from_key(private_key).address
+        self.okx = OKX()
 
     async def get_balance(self, token: Optional[ContractTemp] = None) -> Amount:
         if not token:
@@ -125,37 +126,6 @@ class Onchain:
             tx = await contract.functions.approve(spender.address, value.wei).build_transaction(
                 await self.prepare_transaction())
             return await self.send_transaction(tx)
-
-    async def is_minted(self, ) -> bool:
-        """
-        Проверяет наличие взаимодействия с контрактом, чтобы не было дублирования транзакций
-        :return: возвращает True если взаимодействие было, иначе False
-        """
-        url = (f"https://api.lineascan.build/api"
-               f"?module=account"
-               f"&action=txlist"
-               f"&address={self.address}"
-               f"&startblock=0"
-               f"&endblock=99999999"
-               f"&page=1"
-               f"&offset=10000"
-               f"&sort=asc"
-               f"&apikey={config.lineascan_api_key}")
-        async with AsyncClient() as session:
-            response = await session.get(url)
-
-        response.raise_for_status()
-        if response.json()['status'] == "1":
-            for tx in response.json()['result']:
-                if tx['to'].lower() == self.contract_address.lower() and tx['txreceipt_status'] == "1":
-                    return True
-        else:
-            if response.text.__contains__("No transactions found"):
-                return False
-            else:
-                raise Exception(f"Can't get data from etherscan: {response.text}")
-
-        return False
 
 
 class Amount:

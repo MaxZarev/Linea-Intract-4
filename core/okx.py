@@ -4,7 +4,6 @@ from typing import Literal
 import ccxt.async_support as ccxt
 from loguru import logger
 
-from core.onchain import Amount
 from loader import config
 
 
@@ -24,14 +23,14 @@ class OKX:
             address: str,
             chain: Literal["ERC20", "Linea"],
             token: str,
-            amount: Amount
+            amount: float
     ) -> bool:
         token_with_chain = token + "-" + chain
         fee = await self._get_withdrawal_fee(token, token_with_chain)
         try:
             response = await self.exchange.withdraw(
                 code=token,
-                amount=amount.ether_float,
+                amount=amount,
                 address=address,
                 params={
                     "toAddress": address,
@@ -39,7 +38,7 @@ class OKX:
                     "dest": 4,
                     "fee": fee,
                     "pwd": '-',
-                    "amt": amount.ether_float,
+                    "amt": amount,
                     "network": chain
                 }
             )

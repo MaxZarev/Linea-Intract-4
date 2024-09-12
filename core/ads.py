@@ -29,12 +29,22 @@ class Ads:
         self.metamask = Metamask(self)
 
     async def run(self):
+        """
+        Запускает браузер в ADS и подготавливает его к работе
+        :return: None
+        """
+        # установка прокси в ADS если включена
+        if config.use_proxy:
+            if self.proxy.host == "1.1.1.1":
+                logger.error(f'Error: {self.profile_number} Заполните файл с прокси или отключите использование прокси"')
+                exit()
+            await self.set_proxy()
+
+        # запуск и настройка браузера
         self.browser = await self._start_browser()
         self.context = self.browser.contexts[0]
         self.page = self.context.pages[0]
         await self._prepare_browser()
-        if config.use_proxy:
-            await self.set_proxy()
 
     async def _open_browser(self) -> str:
         """
@@ -141,6 +151,14 @@ class Ads:
             await random_sleep(1, 2)
             response = await self.session.post(url, json=data, headers={"Content-Type": "application/json"})
         response.raise_for_status()
+
+        # смена ip мобильных прокси если включена
+        if config.is_mobile_proxy:
+            try:
+                await self.session.get(config.link_change_ip)
+            except:
+                logger.warning(f"Error: {self.profile_number} ошибка смены ip мобильного прокси")
+                pass
 
     async def get_profile_id(self) -> str:
         """
