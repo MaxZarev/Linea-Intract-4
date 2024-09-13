@@ -76,26 +76,24 @@ class Onchain:
 
         base_fee = 7
 
-        max_priority_fee_per_gas = await self.get_priority_fee()
-
-        max_fee_per_gas = base_fee + max_priority_fee_per_gas
+        max_priority_fee_per_gas = await self.get_max_priority_fee_per_gas()
 
         tx_params['maxPriorityFeePerGas'] = max_priority_fee_per_gas
-        tx_params['maxFeePerGas'] = int(max_fee_per_gas * random.uniform(*config.gas_multiple))
+        tx_params['maxFeePerGas'] = base_fee + max_priority_fee_per_gas
         tx_params['type'] = '0x2'
         return tx_params
 
-    async def get_priority_fee(self) -> int:
+    async def get_max_priority_fee_per_gas(self) -> int:
         """
         Получает среднюю цену за приоритетную транзакцию за последние 25 блоков
         :return: средняя цена за приоритетную транзакцию
         """
-        fee_history = await self.w3.eth.fee_history(25, 'latest', [20.0])
+        percentage = random.uniform(20, 40)
+        fee_history = await self.w3.eth.fee_history(25, 'latest', [percentage])
         non_empty_block_priority_fees = [fee[0] for fee in fee_history["reward"] if fee[0] != 0]
-        divisor_priority = max(len(non_empty_block_priority_fees), 1)
-        priority_fee = int(round(sum(non_empty_block_priority_fees) / divisor_priority))
-
-        return priority_fee
+        fee_multiplier = random.uniform(*config.gas_multiple)
+        max_priority_fee_per_gas = int(random.choice(non_empty_block_priority_fees) * fee_multiplier)
+        return round(max_priority_fee_per_gas, -5)
 
     async def send_transaction(self, tx: TxParams, gas: int = 0) -> TxReceipt:
         """

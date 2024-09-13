@@ -77,6 +77,7 @@ class Bot:
                 return
             except Exception as e:
                 logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
+                raise e
 
 
     async def quest_1(self, quest_number: int, quest_text: str):
