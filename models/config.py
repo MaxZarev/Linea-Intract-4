@@ -14,7 +14,7 @@ class Config(BaseModel):
     metamask_url: str
     gas_multiple: list[float, float]
     gas_limit_multiple: list[float, float]
-    zerolend_supply: list[float, float]
+    shuffle_profiles: bool
     eth_price: float = 0.0
     use_proxy: bool
     is_mobile_proxy: bool

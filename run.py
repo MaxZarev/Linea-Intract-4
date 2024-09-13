@@ -1,4 +1,6 @@
 import asyncio
+from random import shuffle
+
 from loguru import logger
 
 from database.settings import initialize_database, close_database
@@ -40,6 +42,8 @@ async def main():
 
     await initialize_database()
     accounts = config.accounts
+    if config.shuffle_profiles:
+        shuffle(accounts)
     tasks = [worker(account) for account in accounts]
     await asyncio.gather(*tasks, return_exceptions=True)
     await close_database()
