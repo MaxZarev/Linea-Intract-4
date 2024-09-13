@@ -110,4 +110,4 @@ def get_eth_price() -> float:
         except Exception:
             asyncio.sleep(5)
     logger.error(f"Не можем получить цену ETH, ставим 2300")
-    return 2300
+    return random_amount(2200, 2400)
