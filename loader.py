@@ -1,4 +1,4 @@
-from utils import setup
+
 
 
 class SingletonMeta(type):
@@ -14,6 +14,7 @@ class SingletonMeta(type):
 class ConfigSingleton(metaclass=SingletonMeta):
     def __init__(self):
         from utils import load_config
+        from utils import setup
         self.config = load_config()
         setup()
 

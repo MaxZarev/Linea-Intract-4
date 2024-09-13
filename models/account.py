@@ -7,3 +7,4 @@ class Account(BaseModel):
     private_key: str
     password: str
     proxy: Proxy
+    withdraw_address: str

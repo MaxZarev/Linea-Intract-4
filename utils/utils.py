@@ -6,7 +6,7 @@ from random import uniform
 
 import yaml
 from better_proxy import Proxy
-from httpx import AsyncClient, Client
+from httpx import Client
 from loguru import logger
 
 from models import Account, Config
@@ -52,20 +52,27 @@ def get_accounts() -> list[Account]:
     private_keys = read_file(os.path.join(CONFIG_DATA_PATH, "private_keys.txt"))
     passwords = read_file(os.path.join(CONFIG_DATA_PATH, "passwords.txt"))
     proxies = read_file(os.path.join(CONFIG_DATA_PATH, "proxies.txt"), check_empty=False)
+    withdraw_addresses = read_file(os.path.join(CONFIG_DATA_PATH, "withdraw_addresses.txt"), check_empty=False)
+
     if not proxies:
         proxies = ['1.1.1.1:1111'] * len(profiles)
 
-    if len(profiles) != len(private_keys) != len(proxies) != len(passwords):
-        raise ValueError("Количество аккаунтов, прокси и приватных ключей должно быть одинаковым")
+    if not withdraw_addresses:
+        proxies = ['0x'] * len(profiles)
+
+    if len(profiles) != len(private_keys) != len(proxies) != len(passwords) != len(withdraw_addresses):
+        raise ValueError("Количество аккаунтов, прокси, приватных ключей, паролей и адресов вывода должно быть одинаковым")
 
     accounts = []
-    for profile_number, private_key, password, proxy_str in zip(profiles, private_keys, passwords, proxies):
+    for profile_number, private_key, password, proxy_str, withdraw_address in zip(profiles, private_keys, passwords, proxies, withdraw_addresses):
         proxy = Proxy.from_str(proxy_str)
         accounts.append(Account(
             profile_number=profile_number,
             private_key=private_key,
             password=password,
-            proxy=proxy))
+            proxy=proxy,
+            withdraw_address=withdraw_address,
+        ))
     return accounts
 
 

@@ -5,6 +5,7 @@ import os
 import random
 from decimal import Decimal
 from typing import Optional
+from loguru import logger
 
 from web3 import AsyncWeb3
 from web3.contract import AsyncContract
@@ -14,12 +15,14 @@ from web3.types import TxParams, TxReceipt, Wei
 from core.okx import OKX
 from loader import config
 from models import ContractTemp, Account
+from utils import random_amount, random_sleep
 
 
 class Onchain:
     def __init__(self, account: Account):
         self.profile_number = account.profile_number
         self.private_key = account.private_key
+        self.withdraw_address = account.withdraw_address
         self.w3: AsyncWeb3 = AsyncWeb3(
             provider=AsyncWeb3.AsyncHTTPProvider(
                 endpoint_uri=config.rpc_linea,
@@ -102,10 +105,11 @@ class Onchain:
         :param gas: лимит газа, если не указывать считается автоматически
         :return: хэш транзакции
         """
+        logger.debug(f"{self.profile_number}: запускаем отправку транзакции {tx}")
         if gas:
             tx['gas'] = gas
         else:
-            tx['gas'] = int((await self.w3.eth.estimate_gas(tx)) * random.uniform(*config.gas_multiple))
+            tx['gas'] = int((await self.w3.eth.estimate_gas(tx)) * random.uniform(*config.gas_limit_multiple))
 
         signed_tx = self.w3.eth.account.sign_transaction(tx, self.private_key)
 
@@ -125,6 +129,36 @@ class Onchain:
             tx = await contract.functions.approve(spender.address, value.wei).build_transaction(
                 await self.prepare_transaction())
             return await self.send_transaction(tx)
+
+    async def withdraw_to_cex(self) -> None:
+        """
+        Выводит баланс ETH за вычетом минимального баланса на кошельке
+        :return: None
+        """
+
+        if self.withdraw_address == '0x':
+            logger.warning(f"{self.profile_number}: Нет адреса для вывода на CEX")
+            return
+
+        logger.info(f"{self.profile_number}: Запускаем вывод на CEX")
+
+        withdraw_address = self.w3.to_checksum_address(self.withdraw_address)
+
+        balance = await self.get_balance()
+        min_balance = random_amount(*config.min_balance)
+
+        if balance.ether_float <= config.min_balance[1]:
+            logger.warning(f"{self.profile_number}: Баланс меньше минимального, оставляем на кошельке")
+            return
+
+        amount = Amount(balance.ether_float - min_balance)
+        tx_params = TxParams(
+            to=withdraw_address,
+        )
+        tx = await self.prepare_transaction(value=amount.wei, tx_params=tx_params)
+        tx_receipt = await self.send_transaction(tx)
+        logger.info(f"{self.profile_number}: Вывод на CEX: {tx_receipt['transactionHash'].hex()}")
+        await random_sleep(5, 10)
 
 
 class Amount:
@@ -151,9 +185,6 @@ class Amount:
 
     def __repr__(self) -> str:
         return f"Amount(ether={self.ether_float}, wei={self.wei}, decimals={self.decimals})"
-
-
-
 
 
 

@@ -4,8 +4,9 @@ import random
 from loguru import logger
 
 from core.ads import Ads
-from core.onchain import Tokens
+from core.onchain import Tokens, Onchain
 from core.daps import Zeroland, Wowmax, Nile
+from loader import config
 from models import Account
 from database import Accounts
 from models.quest import Quest
@@ -17,13 +18,14 @@ class Bot:
 
     def __init__(self, account: Account):
         self.ads: Ads = Ads(account)
+        self.onchain = Onchain(account)
         self.zeroland = Zeroland(account)
         self.wowmax = Wowmax(account)
         self.nile = Nile(account, self.wowmax)
 
     async def run(self) -> None:
 
-        await Accounts.create_account(self.ads.profile_number, self.zeroland.address)
+        await Accounts.create_account(self.ads.profile_number, self.onchain.address)
 
         await self.ads.run()
         await self.ads.metamask.authorize()
@@ -37,6 +39,9 @@ class Bot:
         await self.shuffle_quest(quests)
         await self.check_statuses(quests)
         await self.run_quests(quests)
+
+        if config.is_withdraw_to_cex:
+            await self.onchain.withdraw_to_cex()
 
         logger.info(f"{self.ads.profile_number}: Все квесты выполнены")
 

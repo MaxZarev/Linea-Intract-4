@@ -125,6 +125,7 @@ class Ads:
             except Exception as e:
                 logger.error(f"{self.profile_number} Ошибка при остановке браузера: {e}")
                 raise e
+        await self.session.aclose()
 
     async def catch_page(self, url_contains: str, timeout: int = 10) -> Page:
         """

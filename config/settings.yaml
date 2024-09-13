@@ -6,12 +6,16 @@ okx:
   okx_passphrase: "" # укажите пароль API OKX
 
 rpc_linea: https://1rpc.io/linea # укажите URL RPC Linea
+gas_multiple: [0.97, 1.05] # множитель газа, для рандомизации
+gas_limit_multiple: [1.2, 1.3] # множитель лимита газа, для рандомизации
 
-metamask_url: "chrome-extension://fffffffffffffffffffffffff/home.html" # укажите адрес метамаск в браузере
 
-gas_multiple: [1.5, 2.5] # множитель газа, для рандомизации
+metamask_url: chrome-extension://fffffffffffffffffffffffff/home.html
 zerolend_supply: [0.007, 0.009] # сумма supply в zeroland для 1 квеста
 
 use_proxy: true  # использовать прокси true/false
 is_mobile_proxy: true # использовать мобильный прокси true/false
 link_change_ip: "" # ссылка смены ip моб. прокси
+
+is_withdraw_to_cex: true # выводить ли ETH на CEX true/false
+min_balance: [0.002, 0.003] # минимальный баланс ETH оставляемый на кошельке
