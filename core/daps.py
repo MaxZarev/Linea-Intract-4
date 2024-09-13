@@ -1,17 +1,15 @@
-import asyncio
 import random
 from datetime import datetime, timedelta
 from typing import Optional
 
-from eth_typing import HexStr
-from loguru import logger
-
-from web3.types import TxParams
 from httpx import AsyncClient
+from eth_typing import HexStr
+from web3.types import TxParams
+from loguru import logger
 
 from core.onchain import Amount, Onchain, Contracts, Tokens
 from models import ContractTemp, Account
-from utils.utils import random_amount, random_sleep, get_eth_price
+from utils import random_amount, random_sleep, get_eth_price
 
 
 class Daps(Onchain):

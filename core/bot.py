@@ -7,17 +7,16 @@ from core.ads import Ads
 from core.onchain import Tokens, Onchain
 from core.daps import Zeroland, Wowmax, Nile
 from loader import config
-from models import Account
 from database import Accounts
-from models.quest import Quest
-
+from models import Account
+from models import Quest
 from utils import random_sleep
 
 
 class Bot:
 
     def __init__(self, account: Account):
-        self.ads: Ads = Ads(account)
+        self.ads = Ads(account)
         self.onchain = Onchain(account)
         self.zeroland = Zeroland(account)
         self.wowmax = Wowmax(account)
@@ -37,7 +36,7 @@ class Bot:
             Quest(4, 'Stake Zero/ETH on Zerolend.')
         ]
         await self.shuffle_quest(quests)
-        await self.check_statuses(quests)
+        # await self.check_statuses(quests)
         await self.run_quests(quests)
 
         if config.is_withdraw_to_cex:

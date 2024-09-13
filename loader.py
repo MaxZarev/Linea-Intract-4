@@ -1,6 +1,3 @@
-
-
-
 class SingletonMeta(type):
     _instances = {}
 
@@ -20,4 +17,3 @@ class ConfigSingleton(metaclass=SingletonMeta):
 
 
 config = ConfigSingleton().config
-

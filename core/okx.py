@@ -26,7 +26,7 @@ class OKX:
             chain: Literal["ERC20", "Linea"],
             token: str,
             amount: float
-    ) -> bool:
+    ) -> None:
         token_with_chain = token + "-" + chain
         fee = await self._get_withdrawal_fee(token, token_with_chain)
         try:
@@ -49,12 +49,10 @@ class OKX:
             await self.wait_confirm(tx_id)
             logger.info(f'{self.profile_number}: Успешно выведено {amount} {token}')
             await self.exchange.close()
-            return True
         except Exception as error:
-            logger.error(f'{self.profile_number}: Не удалось вывести {amount} {token}: {error} ')
-            return False
-        finally:
             await self.exchange.close()
+            logger.error(f'{self.profile_number}: Не удалось вывести {amount} {token}: {error} ')
+            raise error
 
     async def _get_withdrawal_fee(self, token: str, token_with_chain: str):
         currencies = await self.exchange.fetch_currencies()

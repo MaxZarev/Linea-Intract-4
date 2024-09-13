@@ -5,8 +5,8 @@ import os
 import random
 from decimal import Decimal
 from typing import Optional
-from loguru import logger
 
+from loguru import logger
 from web3 import AsyncWeb3
 from web3.contract import AsyncContract
 from web3.eth import AsyncEth

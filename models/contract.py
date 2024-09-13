@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
-import web3
 from eth_typing import ChecksumAddress
 from web3 import Web3
 

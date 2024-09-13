@@ -181,10 +181,10 @@ class Ads:
         :return: ads profile id
         """
         url = self.local_api_url + 'user/list'
-        parameters = {"serial_number": self.profile_number}
+        params = {"serial_number": self.profile_number}
         async with lock:
             await random_sleep(1, 2)
-            response = await self.session.get(url, params=parameters)
+            response = await self.session.get(url, params=params)
         if response.status_code == 200:
             return response.json()['data']['list'][0]['user_id']
 
