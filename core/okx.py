@@ -27,6 +27,14 @@ class OKX:
             token: str,
             amount: float
     ) -> None:
+        """
+        Вывод средств с биржи OKX
+        :param address:  Адрес кошелька
+        :param chain: сеть
+        :param token: токен
+        :param amount: сумма
+        :return: None
+        """
         token_with_chain = token + "-" + chain
         fee = await self._get_withdrawal_fee(token, token_with_chain)
         try:
@@ -55,6 +63,12 @@ class OKX:
             raise error
 
     async def _get_withdrawal_fee(self, token: str, token_with_chain: str):
+        """
+        Получение комиссии за вывод
+        :param token: название токена
+        :param token_with_chain: айди токен-сеть
+        :return:
+        """
         currencies = await self.exchange.fetch_currencies()
         for currency in currencies:
             if currency == token:
@@ -70,15 +84,20 @@ class OKX:
                                 return 0
                             else:
                                 return withdrawal_fee
-        print(f" не могу получить сумму комиссии, проверьте значения symbolWithdraw и network")
+        logger.error(f" не могу получить сумму комиссии, проверьте значения symbolWithdraw и network")
         return 0
 
-    async def wait_confirm(self, tx_id: str):
-        for _ in range(20):
+    async def wait_confirm(self, tx_id: str) -> None:
+        """
+        Ожидание подтверждения транзакции вывода с OKX
+        :param tx_id: id транзакции вывода
+        :return: None
+        """
+        for _ in range(30):
             tx_info = await self.exchange.fetch_withdrawal(tx_id)
             if tx_info.get("status") == "ok":
                 logger.debug(f"{self.profile_number}: Транзакция {tx_id} завершена")
-                return True
+                return
             await asyncio.sleep(10)
         logger.error(f"{self.profile_number}: Ошибка транзакция {tx_id} не завершена")
-        return False
+        raise Exception(f"{self.profile_number} Транзакция {tx_id} не завершена")

@@ -18,6 +18,9 @@ from utils import random_amount, random_sleep
 
 
 class Onchain:
+    """
+    Класс содержащий методы для работы с EVM блокчейном
+    """
     def __init__(self, account: Account):
         self.profile_number = account.profile_number
         self.private_key = account.private_key
@@ -32,6 +35,11 @@ class Onchain:
         self.okx = OKX(account)
 
     async def get_balance(self, token: Optional[ContractTemp] = None) -> Amount:
+        """
+        Получает баланс кошелька
+        :param token: токен, если не указан, возвращает баланс ETH
+        :return: баланс нативного токена или токена, если указан
+        """
         if not token:
             amount_wei = await self.w3.eth.get_balance(self.address)
         else:
@@ -161,6 +169,9 @@ class Onchain:
 
 
 class Contracts:
+    """
+    Класс для хранения объектов контрактов
+    """
     wowmax_event_router = ContractTemp('0x9773e6C011e6CF919904b2F99DDc66e616611269')
     nile_router = ContractTemp('0xaaa45c8f5ef92a000a121d102f4e89278a711faa', 'nile_router')
     nile_pair = ContractTemp('0x0040F36784dDA0821E74BA67f86E084D70d67a3A', 'nile_pair')
@@ -170,6 +181,9 @@ class Contracts:
 
 
 class Tokens:
+    """
+    Класс для хранения объектов токенов
+    """
     ETH = ContractTemp('ETH')
     WETH = ContractTemp('0x0000000000000000000000000000000000000000')
     ZERO = ContractTemp('0x78354f8DcCB269a615A7e0a24f9B0718FDC3C7A7')
@@ -181,6 +195,11 @@ class Tokens:
 
     @classmethod
     def get_lp_token(cls, token: ContractTemp) -> ContractTemp:
+        """
+        Возвращает LP токен по токену в паре с эфиром
+        :param token: токен
+        :return: LP токен
+        """
         token_name = cls.get_token_name(token)
         lp_token = getattr(cls, f'LP_{token_name}_WETH')
         return lp_token

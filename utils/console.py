@@ -4,6 +4,10 @@ from loguru import logger
 
 
 def setup():
+    """
+    Настройка логгера
+    :return:
+    """
     logger.remove()
     logger.add(
         sys.stdout,

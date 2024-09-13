@@ -27,10 +27,10 @@ class Daps(Onchain):
         ).call()
         return Amount(reserves[0] / reserves[1])
 
-    async def balance_check_and_popup(self):
+    async def balance_check_and_popup(self) -> None:
         """
-        Проверяет баланс эфира и выводит его если он меньше 1$
-        :return:
+        Проверяет баланс эфира и выводит его если он меньше 16$
+        :return: None
         """
         balance_eth = await self.get_balance()
         if balance_eth.ether_float < 16 / self.eth_price:
@@ -59,7 +59,8 @@ class Wowmax(Daps):
             token_balance = await self.get_balance(from_token)
             token_price_in_eth = await self.get_swap_price(from_token)
             if token_balance.ether_float < 1 / token_price_in_eth.ether_float:
-                logger.warning(f"{self.profile_number}: Баланс токена меньше 1$ - {token_balance}, пропускаем свап")
+                logger.warning(
+                    f"{self.profile_number}: Баланс токена меньше 1$ - {token_balance}, пропускаем свап")
                 return
             # даем апрув контракту на переданную сумму или на баланс токена
             if not amount_from:
@@ -82,7 +83,8 @@ class Wowmax(Daps):
         tx = await self.prepare_transaction(tx_params=tx_params, value=value.wei)
 
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"{self.profile_number}: Swap {from_token} - {to_token}: {tx_receipt['transactionHash'].hex()}")
+        logger.info(
+            f"{self.profile_number}: Swap {from_token} - {to_token}: {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     @staticmethod
@@ -111,7 +113,7 @@ class Nile(Daps):
         super().__init__(account)
         self.wowmax = wowmax
 
-    async def add_liquidity_eth(self, token: ContractTemp):
+    async def add_liquidity_eth(self, token: ContractTemp) -> None:
         """
         Добавление ликвидности в пул в пару, переданный токен + ETH на Wowmax,
         берет количество переданного токена, делает апрув контракту,
@@ -170,10 +172,16 @@ class Nile(Daps):
             int(deadline.timestamp())
         ).build_transaction(await self.prepare_transaction(value=amount_eth.wei))
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"{self.profile_number} Добавление ликвидности в пул: {tx_receipt['transactionHash'].hex()}")
+        logger.info(
+            f"{self.profile_number} Добавление ликвидности в пул: {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
-    async def remove_liquidity(self, token: ContractTemp):
+    async def remove_liquidity(self, token: ContractTemp) -> None:
+        """
+        Выводит ликвидность из пула на Wowmax
+        :param token: токен в паре с эфиром
+        :return: None
+        """
         lp_contract = self.get_contract(Tokens.get_lp_token(token))
         balance_lp = Amount(await lp_contract.functions.balanceOf(self.address).call(), wei=True)
 
@@ -205,7 +213,11 @@ class Nile(Daps):
         logger.info(f"{self.profile_number}: Ликвидность выведена {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
-    async def stake(self):
+    async def stake(self) -> None:
+        """
+        Стейкает небольшое количество LP токена в Nile
+        :return: None
+        """
 
         # проверяем баланс стейка, если уже есть стейк, то не делаем новый
         stake_balance = await self.get_balance(Tokens.ZERO_LP_VOTING)
@@ -237,6 +249,11 @@ class Nile(Daps):
         await random_sleep(5, 10)
 
     async def get_lp_price(self, token: ContractTemp) -> Amount:
+        """
+        Получает цену LP токена
+        :param token: токен в паре с эфиром
+        :return: Цена LP токена в USD
+        """
         lp_contract = self.get_contract(Tokens.get_lp_token(token))
         reserves = await lp_contract.functions.getReserves().call()
         lp_supply = Amount(await lp_contract.functions.totalSupply().call(), wei=True)
@@ -250,8 +267,11 @@ class Zeroland(Daps):
     def __init__(self, account: Account):
         super().__init__(account)
 
-    async def supply_zerolend(self):
-
+    async def supply_zerolend(self) -> None:
+        """
+        Добавляет ликвидность в Zerolend
+        :return: None
+        """
         zero_min_amount = Amount(random_amount(16 / self.eth_price, 17 / self.eth_price, round_n=6))
 
         token_contract = self.get_contract(Tokens.ZERO_ETH)
@@ -271,10 +291,11 @@ class Zeroland(Daps):
         ).build_transaction(await self.prepare_transaction(value=zero_min_amount.wei))
 
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"{self.profile_number}: Добавили ликвидность в Zerolend {tx_receipt['transactionHash'].hex()}")
+        logger.info(
+            f"{self.profile_number}: Добавили ликвидность в Zerolend {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
-    async def withdraw_zerolend(self):
+    async def withdraw_zerolend(self) -> None:
         """
         Выводит ETH из supply на Zerolend
         :return: None
@@ -294,5 +315,6 @@ class Zeroland(Daps):
         ).build_transaction(
             await self.prepare_transaction())
         tx_receipt = await self.send_transaction(tx)
-        logger.info(f"{self.profile_number}: Успешно вывели ликвидность из Zerolend {tx_receipt['transactionHash'].hex()}")
+        logger.info(
+            f"{self.profile_number}: Успешно вывели ликвидность из Zerolend {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)

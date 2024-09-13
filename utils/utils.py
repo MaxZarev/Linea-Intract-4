@@ -21,6 +21,14 @@ def read_file(
         is_yaml: bool = False,
         convert_to_int: bool = False,
 ) -> list[str] | list[int] | dict:
+    """
+    Читает файл и возвращает список строк или словарь.
+    :param file_path:  путь к файлу
+    :param check_empty:  проверка на пустоту файла
+    :param is_yaml:  является ли файл yaml
+    :param convert_to_int: конвертировать строки в int
+    :return: список со строками или числами, либо словарь из yaml
+    """
     if not os.path.exists(file_path):
         logger.error(f"Файл не найден: {file_path}")
         exit(1)
@@ -45,7 +53,7 @@ def read_file(
 
 def get_accounts() -> list[Account]:
     """
-    Достает из файлов wallets.txt и proxies.txt данные и создает список аккаунтов
+    Достает из файлов данные для создания аккаунтов
     :return: список аккаунтов
     """
     profiles = read_file(os.path.join(CONFIG_DATA_PATH, "profiles.txt"), convert_to_int=True)
@@ -88,15 +96,32 @@ def load_config() -> Config:
 
 
 def random_amount(min_n: float, max_n: float, round_n: int = 4) -> float:
+    """
+    Генерирует случайное число с плавающей точкой, с возможностью округления
+    :param min_n: минимальное число
+    :param max_n: максимальное число
+    :param round_n: округление
+    :return:
+    """
     return round(uniform(min_n, max_n), round_n)
 
 
 async def random_sleep(min_n: float, max_n: float):
+    """
+    Асинхронная функция для случайной паузы
+    :param min_n: минимальное время
+    :param max_n: максимальное время
+    :return:
+    """
     sleep_time = random_amount(min_n, max_n)
     await asyncio.sleep(sleep_time)
 
 
 def get_eth_price() -> float:
+    """
+    Получает цену ETH с API wowmax
+    :return: цена ETH, либо ~2300, если не удалось получить по API
+    """
     for _ in range(3):
         try:
             with Client() as session:

@@ -2,6 +2,10 @@ from tortoise import Tortoise
 from loguru import logger
 
 async def initialize_database() -> None:
+    """
+    Инициализация базы данных
+    :return:
+    """
     try:
         await Tortoise.init(
             db_url='sqlite://database/database.sqlite3',
@@ -14,6 +18,10 @@ async def initialize_database() -> None:
         exit(0)
 
 async def close_database() -> None:
+    """
+    Закрытие соединения с базой данных
+    :return:
+    """
     try:
         await Tortoise.close_connections()
         logger.info('Соединение с бд закрыто.')

@@ -6,6 +6,9 @@ from web3.types import Wei
 
 
 class Amount:
+    """
+    Класс для работы с суммами в ETH и WEI
+    """
     wei: Wei | int
     ether: Decimal
     ether_float: float

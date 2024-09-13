@@ -14,20 +14,41 @@ class Accounts(Model):
 
     @classmethod
     async def get_account(cls, profile_number: int) -> "Accounts":
+        """
+        Получает аккаунт по номеру профиля
+        :param profile_number:  номер профиля
+        :return:
+        """
         return await cls.get_or_none(profile_number=profile_number)
 
     @classmethod
     async def get_accounts(cls) -> list["Accounts"]:
+        """
+        Получает список всех аккаунтов
+        :return:  список аккаунтов
+        """
         return await cls.all()
 
     @classmethod
     async def create_account(cls, profile_number: int, address: str) -> None:
+        """
+        Создает аккаунт в базе данных
+        :param profile_number:  номер профиля
+        :param address:  адрес кошелька
+        :return:  None
+        """
         account = await cls.get_account(profile_number=profile_number)
         if account is None:
             await cls.create(profile_number=profile_number, address=address, )
 
     @classmethod
     async def change_status(cls, profile_number: int, quest: int) -> None:
+        """
+        Изменяет статус квеста по номеру профиля и номеру квеста
+        :param profile_number:  номер профиля
+        :param quest:  номер квеста
+        :return:  None
+        """
         account = await cls.get_account(profile_number=profile_number)
         if account is not None:
             if quest == 1:
@@ -42,6 +63,12 @@ class Accounts(Model):
 
     @classmethod
     async def get_status(cls, profile_number: int, quest: int) -> bool:
+        """
+        Проверяет статус квеста по номеру профиля и номеру квеста
+        :param profile_number:  номер профиля
+        :param quest:  номер квеста
+        :return:  статус квеста
+        """
         account = await cls.get_account(profile_number=profile_number)
         if account is not None:
             if quest == 1:
@@ -56,6 +83,11 @@ class Accounts(Model):
 
     @classmethod
     async def get_statuses(cls, profile_number: int):
+        """
+        Проверяет все статусы квестов
+        :param profile_number: номер профиля
+        :return: True если все квесты выполнены, иначе False
+        """
         account = await cls.get_account(profile_number=profile_number)
         if account is not None:
             return all([

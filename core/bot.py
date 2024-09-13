@@ -35,7 +35,13 @@ class Bot:
         return False
 
     async def run(self) -> None:
-
+        """
+        Запуск основной логики бота, проверка квестов на сайте interact.io.
+        Выполнение квестов по списку в ончейн с пополнением с биржи.
+        Прокликивание квестов на сайте interact.io
+        Вывод остатка ликвидности на биржу
+        :return: None
+        """
         await Accounts.create_account(self.ads.profile_number, self.onchain.address)
 
         await self.ads.run()
@@ -60,7 +66,7 @@ class Bot:
         """
         Перемешивает первые три квеста
         :param quests:
-        :return:
+        :return: None
         """
         first_three_quests = quests[:3]
         random.shuffle(first_three_quests)
@@ -94,7 +100,13 @@ class Bot:
                 logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
                 raise e
 
-    async def quest_1(self, quest_number: int, quest_text: str):
+    async def quest_1(self, quest_number: int, quest_text: str) -> None:
+        """
+        Выполнение первого квеста.
+        :param quest_number: номер квеста
+        :param quest_text: текст квеста, для поиска кнопок.
+        :return: None
+        """
         if not await Accounts.get_status(self.ads.profile_number, 1):
             await self.nile.add_liquidity_eth(Tokens.ZERO)
             await self.interact_quest(quest_number, quest_text)
@@ -102,25 +114,47 @@ class Bot:
         await self.nile.remove_liquidity(Tokens.ZERO)
         await self.wowmax.swap(Tokens.ZERO, Tokens.ETH)
 
-    async def quest_2(self, quest_number: int, quest_text: str):
+    async def quest_2(self, quest_number: int, quest_text: str) -> None:
+        """
+        Выполнение второго квеста.
+        :param quest_number: номер квеста
+        :param quest_text: текст квеста, для поиска кнопок.
+        :return: None
+        """
         if not await Accounts.get_status(self.ads.profile_number, 2):
             await self.zeroland.supply_zerolend()
             await self.interact_quest(quest_number, quest_text)
         await self.zeroland.withdraw_zerolend()
 
-    async def quest_3(self, quest_number: int, quest_text: str):
+    async def quest_3(self, quest_number: int, quest_text: str) -> None:
+        """
+        Выполнение третьего квеста.
+        :param quest_number: номер квеста
+        :param quest_text: текст квеста, для поиска кнопок.
+        :return: None
+        """
         if not await Accounts.get_status(self.ads.profile_number, 3):
             await self.nile.add_liquidity_eth(Tokens.NILE)
             await self.interact_quest(quest_number, quest_text)
         await self.nile.remove_liquidity(Tokens.NILE)
         await self.wowmax.swap(Tokens.NILE, Tokens.ETH)
 
-    async def quest_4(self, quest_number: int, quest_text: str):
+    async def quest_4(self, quest_number: int, quest_text: str) -> None:
+        """
+        Выполнение четвертого квеста.
+        :param quest_number: номер квеста
+        :param quest_text: текст квеста, для поиска кнопок.
+        :return: None
+        """
         if not await Accounts.get_status(self.ads.profile_number, 4):
             await self.nile.stake()
             await self.interact_quest(quest_number, quest_text)
 
-    async def open_interact(self):
+    async def open_interact(self) -> None:
+        """
+        Открывает сайт interact.io и подключает кошелек метамаск.
+        :return: None
+        """
         try:
             await self.ads.page.goto('https://www.intract.io/quest/66bb5618c8ff56cba848ea8f')
         except Exception:
@@ -137,25 +171,19 @@ class Bot:
             await signature_page.get_by_test_id('page-container-footer-next').click()
             await self.ads.page.wait_for_load_state('load')
 
-    async def interact_quest(self, quest_number: int, quest_text: str) -> bool:
+    async def interact_quest(self, quest_number: int, quest_text: str) -> None:
         """
         Прокликивает задание на Zerolend
         :return:
         """
         if await Accounts.get_status(self.ads.profile_number, quest_number):
             logger.info(f"{self.ads.profile_number}: Квест {quest_number} уже пройден ранее")
-            return True
+            return
 
         logger.info(f"{self.ads.profile_number}: Пробуем пройти квест на interact {quest_number}")
         await self.open_interact()
 
-        quest_block = self.ads.page.locator('//div[contains(@class, "task_trigger_container")]',
-                                            has_text=quest_text)
-
-        if await quest_block.get_by_alt_text('check task logo badge').is_visible():
-            logger.info(f"{self.ads.profile_number}: Квест {quest_number} пройден")
-            await Accounts.change_status(self.ads.profile_number, quest_number)
-            return True
+        await self.check_status(quest_number, quest_text)
 
         await self.ads.page.get_by_text(quest_text).click()
         await self.ads.page.locator('div.modal-dialog:visible').get_by_role('button').filter(
@@ -170,10 +198,14 @@ class Bot:
         await self.interact_quest(quest_number, quest_text)
 
     async def check_status(self, quest_number: int, quest_text: str) -> None:
+        """
+        Проверяет статус квеста на сайте interact.io
+        :param quest_number:
+        :param quest_text:
+        :return: None
+        """
         quest_block = self.ads.page.locator('//div[contains(@class, "task_trigger_container")]',
                                             has_text=quest_text)
 
         if await quest_block.get_by_alt_text('check task logo badge').is_visible():
             await Accounts.change_status(self.ads.profile_number, quest_number)
-
-

@@ -8,6 +8,9 @@ from web3 import Web3
 
 @dataclass
 class ContractTemp:
+    """
+    Класс для хранения адреса контракта и его имени аби
+    """
     address: ChecksumAddress | str
     abi_name: str = 'token'
 

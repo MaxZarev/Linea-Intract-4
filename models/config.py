@@ -4,6 +4,9 @@ from models import Account
 
 
 class Config(BaseModel):
+    """
+    Конфигурация бота c валидацией
+    """
     accounts: list[Account]
     threads: int
     okx: dict[str, str]

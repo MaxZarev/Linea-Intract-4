@@ -1,4 +1,5 @@
 class SingletonMeta(type):
+    """Метакласс для создания синглтонов"""
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -9,6 +10,7 @@ class SingletonMeta(type):
 
 
 class ConfigSingleton(metaclass=SingletonMeta):
+    """Создание конфига в одном экземпляре"""
     def __init__(self):
         from utils import load_config
         from utils import setup

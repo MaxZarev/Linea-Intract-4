@@ -36,7 +36,8 @@ class Ads:
         # установка прокси в ADS если включена
         if config.use_proxy:
             if self.proxy.host == "1.1.1.1":
-                logger.error(f'{self.profile_number}: Ошибка заполните файл с прокси или отключите использование прокси"')
+                logger.error(
+                    f'{self.profile_number}: Ошибка заполните файл с прокси или отключите использование прокси"')
                 exit()
             await self.set_proxy()
 
@@ -110,6 +111,7 @@ class Ads:
         except Exception as e:
             logger.error(f"{self.profile_number}: Ошибка при закрытии страниц: {e}")
             raise e
+
     async def close_browser(self) -> None:
         """
         Останавливает браузер в ADS по номеру профиля
@@ -147,7 +149,7 @@ class Ads:
     async def set_proxy(self) -> None:
         """
         Устанавливает прокси для профиля в ADS
-        :return:
+        :return: None
         """
         proxy_config = {
             "proxy_type": "http",
@@ -178,8 +180,8 @@ class Ads:
 
     async def get_profile_id(self) -> str:
         """
-        Get profile id by profile number
-        :return: ads profile id
+        Запрашивает id профиля в ADS по номеру профиля
+        :return: id профиля в ADS
         """
         url = self.local_api_url + 'user/list'
         params = {"serial_number": self.profile_number}
