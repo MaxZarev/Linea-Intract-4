@@ -7,8 +7,8 @@ from eth_typing import HexStr
 from web3.types import TxParams
 from loguru import logger
 
-from core.onchain import Amount, Onchain, Contracts, Tokens
-from models import ContractTemp, Account
+from core.onchain import Onchain, Contracts, Tokens
+from models import ContractTemp, Account, Amount
 from utils import random_amount, random_sleep, get_eth_price
 
 
