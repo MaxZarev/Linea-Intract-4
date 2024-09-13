@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import random
-from decimal import Decimal
 from typing import Optional
 
 from loguru import logger
@@ -14,7 +13,7 @@ from web3.types import TxParams, TxReceipt, Wei
 
 from core.okx import OKX
 from loader import config
-from models import ContractTemp, Account
+from models import ContractTemp, Account, Amount
 from utils import random_amount, random_sleep
 
 
@@ -159,33 +158,6 @@ class Onchain:
         tx_receipt = await self.send_transaction(tx)
         logger.info(f"{self.profile_number}: Вывод на CEX: {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
-
-
-class Amount:
-    wei: Wei | int
-    ether: Decimal
-    ether_float: float
-    decimals: int
-
-    def __init__(self, amount: int | float | str | Decimal, decimals: int = 18, wei: bool = False) -> None:
-
-        if wei:
-            self.wei = int(amount)
-            self.ether = Decimal(str(amount)) / 10 ** decimals
-            self.ether_float = float(self.ether)
-        else:
-            self.wei = int(amount * 10 ** decimals)
-            self.ether = Decimal(str(amount))
-            self.ether_float = float(amount)
-
-        self.decimals = decimals
-
-    def __str__(self) -> str:
-        return str(self.ether)
-
-    def __repr__(self) -> str:
-        return f"Amount(ether={self.ether_float}, wei={self.wei}, decimals={self.decimals})"
-
 
 
 class Contracts:

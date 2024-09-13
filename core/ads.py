@@ -110,12 +110,13 @@ class Ads:
         except Exception as e:
             logger.error(f"{self.profile_number}: Ошибка при закрытии страниц: {e}")
             raise e
-
     async def close_browser(self) -> None:
         """
         Останавливает браузер в ADS по номеру профиля
         :return:
         """
+        await self.browser.close()
+
         params = dict(serial_number=self.profile_number)
         url = self.local_api_url + 'browser/stop'
         async with lock:

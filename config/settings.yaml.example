@@ -10,7 +10,7 @@ gas_multiple: [0.97, 1.05] # множитель газа, для рандоми�
 gas_limit_multiple: [1.2, 1.3] # множитель лимита газа, для рандомизации
 
 
-metamask_url: chrome-extension://fffffffffffffffffffffffff/home.html
+metamask_url: chrome-extension://fffffffffffffffffffffffffffff/home.html
 zerolend_supply: [0.007, 0.009] # сумма supply в zeroland для 1 квеста
 
 use_proxy: true  # использовать прокси true/false

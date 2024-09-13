@@ -8,7 +8,7 @@ def setup():
     logger.add(
         sys.stdout,
         colorize=True,
-        format="<light-cyan>{time:DD-MM HH:mm:ss}</light-cyan> | <level> {level: <8} {file}:{function}:{line}</level> | - <white>{message}</white>",
+        format="<light-cyan>{time:DD-MM HH:mm:ss}</light-cyan> | <level> {level: <8} </level> {file}:{function}:{line} | {message}",
         level="DEBUG",
     )
 

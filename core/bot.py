@@ -22,6 +22,18 @@ class Bot:
         self.wowmax = Wowmax(account)
         self.nile = Nile(account, self.wowmax)
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.ads.close_browser()
+        await self.onchain.w3.provider.disconnect()
+        await self.zeroland.w3.provider.disconnect()
+        await self.wowmax.w3.provider.disconnect()
+        await self.nile.w3.provider.disconnect()
+
+        return False
+
     async def run(self) -> None:
 
         await Accounts.create_account(self.ads.profile_number, self.onchain.address)
@@ -36,14 +48,13 @@ class Bot:
             Quest(4, 'Stake Zero/ETH on Zerolend.')
         ]
         await self.shuffle_quest(quests)
-        # await self.check_statuses(quests)
+        await self.check_statuses(quests)
         await self.run_quests(quests)
 
         if config.is_withdraw_to_cex:
             await self.onchain.withdraw_to_cex()
 
-        logger.info(f"{self.ads.profile_number}: Все квесты выполнены")
-
+        logger.success(f"{self.ads.profile_number}: Все квесты выполнены")
 
     async def shuffle_quest(self, quests: list[Quest]) -> None:
         """
@@ -82,7 +93,6 @@ class Bot:
             except Exception as e:
                 logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
                 raise e
-
 
     async def quest_1(self, quest_number: int, quest_text: str):
         if not await Accounts.get_status(self.ads.profile_number, 1):
@@ -165,3 +175,5 @@ class Bot:
 
         if await quest_block.get_by_alt_text('check task logo badge').is_visible():
             await Accounts.change_status(self.ads.profile_number, quest_number)
+
+

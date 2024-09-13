@@ -13,7 +13,7 @@ semaphore = asyncio.Semaphore(config.threads)
 def d_semaphore(func):
     async def wrapper(*args, **kwargs):
         async with semaphore:
-            # await asyncio.sleep(1)
+            await asyncio.sleep(1)
             result = await func(*args, **kwargs)
             return result
     return wrapper
@@ -25,13 +25,13 @@ async def worker(account: Account):
     if await Accounts.get_statuses(account.profile_number):
         logger.info(f'{account.profile_number}: Аккаунт уже был сделан ранее')
         return
-    bot = Bot(account)
-    try:
-        await bot.run()
-    except Exception as e:
-        logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
-    finally:
-        await bot.ads.close_browser()
+
+    async with Bot(account) as bot:
+        try:
+            await bot.run()
+        except Exception as e:
+            logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
+
 
 async def main():
     print('Скрипт подготовлен Zarev')
