@@ -9,6 +9,7 @@ class Config(BaseModel):
     """
     accounts: list[Account]
     threads: int
+    is_withdraw_to_wallet: bool
     okx: dict[str, str]
     rpc_linea: str
     metamask_url: str

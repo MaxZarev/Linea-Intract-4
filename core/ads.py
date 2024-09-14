@@ -130,7 +130,7 @@ class Ads:
                 raise e
         await self.session.aclose()
 
-    async def catch_page(self, url_contains: str, timeout: int = 10) -> Page:
+    async def catch_page(self, url_contains: str, timeout: int = 10) -> Optional[Page]:
         """
         Ищет страницу по частичному совпадению url.
         Вызывает исключение если страница не найдена в течении timeout секунд.
@@ -143,8 +143,8 @@ class Ads:
                 if url_contains in page.url:
                     return page
                 await asyncio.sleep(1)
-        logger.error(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
-        raise Exception(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
+        logger.warning(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
+        return None
 
     async def set_proxy(self) -> None:
         """
@@ -233,7 +233,8 @@ class Metamask:
         metamask_page = await page_catcher.value
         await metamask_page.wait_for_load_state('load')
         await metamask_page.get_by_test_id('page-container-footer-next').click()
-        await metamask_page.get_by_test_id('page-container-footer-next').click()
+        if await metamask_page.get_by_test_id('page-container-footer-next').count() > 0:
+            await metamask_page.get_by_test_id('page-container-footer-next').click()
 
     async def confirm_tx(self, locator) -> None:
         """

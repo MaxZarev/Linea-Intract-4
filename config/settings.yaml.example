@@ -1,5 +1,8 @@
 threads: 1 # укажите количество одновременных потоков
 
+is_withdraw_to_wallet: true # выводить ли ETH на кошелек c биржи OKX true/false
+
+# ключи от биржи OKX, заполнять только если is_withdraw_to_wallet: true
 okx:
   okx_api_key: "" # укажите ключ API OKX
   okx_secret_key: "" # укажите секретный ключ API OKX

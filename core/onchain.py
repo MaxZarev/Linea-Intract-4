@@ -32,7 +32,8 @@ class Onchain:
             modules={'eth': (AsyncEth,)},
         )
         self.address = self.w3.eth.account.from_key(account.private_key).address
-        self.okx = OKX(account)
+        if config.is_withdraw_to_wallet:
+            self.okx = OKX(account)
 
     async def get_balance(self, token: Optional[ContractTemp] = None) -> Amount:
         """

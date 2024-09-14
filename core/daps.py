@@ -8,6 +8,7 @@ from web3.types import TxParams
 from loguru import logger
 
 from core.onchain import Onchain, Contracts, Tokens
+from loader import config
 from models import ContractTemp, Account, Amount
 from utils import random_amount, random_sleep, get_eth_price
 
@@ -34,9 +35,13 @@ class Daps(Onchain):
         """
         balance_eth = await self.get_balance()
         if balance_eth.ether_float < 16 / self.eth_price:
-            random_round = random.randint(5, 7)
-            amount = random_amount(20 / self.eth_price, 25 / self.eth_price, round_n=random_round)
-            await self.okx.okx_withdraw(self.address, 'Linea', 'ETH', amount)
+            if config.is_withdraw_to_wallet:
+                random_round = random.randint(5, 7)
+                amount = random_amount(20 / self.eth_price, 25 / self.eth_price, round_n=random_round)
+                await self.okx.okx_withdraw(self.address, 'Linea', 'ETH', amount)
+            else:
+                logger.error(f"{self.profile_number}: Недостаточно баланса ETH для работы, пополните баланс")
+                raise Exception("Недостаточно баланса ETH для работы, пополните баланс")
 
 
 class Wowmax(Daps):
@@ -65,8 +70,6 @@ class Wowmax(Daps):
             # даем апрув контракту на переданную сумму или на баланс токена
             if not amount_from:
                 amount_from = token_balance
-            token_contract = self.get_contract(from_token)
-            await self.approve(token_contract, Contracts.wowmax_event_router, amount_from)
         else:
             await self.balance_check_and_popup()
             if not amount_from:
@@ -74,9 +77,15 @@ class Wowmax(Daps):
 
         # получаем путь для обмена и данные по обмену
         r = await self.get_data(from_token, to_token, amount_from)
+        wowmax_event_router = ContractTemp(r['contract'])
+
+        # если меняем токен на эфир, то даем апрув контракту
+        if from_token != Tokens.ETH:
+            token_contract = self.get_contract(from_token)
+            await self.approve(token_contract, wowmax_event_router, amount_from)
 
         tx_params = TxParams(
-            to=Contracts.wowmax_event_router.address,
+            to=wowmax_event_router.address,
             data=HexStr(r['data']),
         )
         value = amount_from if from_token == Tokens.ETH else Amount(0)
@@ -84,7 +93,7 @@ class Wowmax(Daps):
 
         tx_receipt = await self.send_transaction(tx)
         logger.info(
-            f"{self.profile_number}: Swap {from_token} - {to_token}: {tx_receipt['transactionHash'].hex()}")
+            f"{self.profile_number}: Swap Wowmax {from_token} - {to_token}: {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
 
     @staticmethod
@@ -247,6 +256,7 @@ class Nile(Daps):
         tx_receipt = await self.send_transaction(tx)
         logger.info(f"{self.profile_number}: Застейкали {tx_receipt['transactionHash'].hex()}")
         await random_sleep(5, 10)
+
 
     async def get_lp_price(self, token: ContractTemp) -> Amount:
         """
