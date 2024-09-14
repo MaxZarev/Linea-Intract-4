@@ -2,7 +2,6 @@ import random
 from datetime import datetime, timedelta
 from typing import Optional
 
-from httpx import AsyncClient
 from eth_typing import HexStr
 from web3.types import TxParams
 from loguru import logger
@@ -11,6 +10,8 @@ from core.onchain import Onchain, Contracts, Tokens
 from loader import config
 from models import ContractTemp, Account, Amount
 from utils import random_amount, random_sleep, get_eth_price
+
+from utils.utils import get_request
 
 
 class Daps(Onchain):
@@ -105,16 +106,14 @@ class Wowmax(Daps):
         :param amount: сумма обмена
         :return: данные по обмену
         """
-        async with AsyncClient() as session:
-            uri = 'https://api-gateway.wowmax.exchange/chains/59144/swap'
-            params = {
-                'from': from_token,
-                'to': to_token,
-                'amount': amount,
-                'slippage': 5
-            }
-            response = await session.get(uri, params=params)
-        return response.json()
+        uri = 'https://api-gateway.wowmax.exchange/chains/59144/swap'
+        params = {
+            'from': from_token.address,
+            'to': to_token.address,
+            'amount': str(amount.ether),
+            'slippage': 5
+        }
+        return await get_request(uri, params)
 
 
 class Nile(Daps):

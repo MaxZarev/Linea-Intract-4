@@ -4,9 +4,11 @@ import asyncio
 import os
 from random import uniform
 
+import aiohttp
 import yaml
+from aiohttp import ClientSession, DefaultResolver
+from requests import get
 from better_proxy import Proxy
-from httpx import Client
 from loguru import logger
 
 from models import Account, Config
@@ -117,6 +119,21 @@ async def random_sleep(min_n: float, max_n: float):
     await asyncio.sleep(sleep_time)
 
 
+
+async def get_request(url: str, params: dict = None) -> dict:
+    """
+    GET запрос к API
+    :param url: адрес
+    :param params: параметры
+    :return: ответ
+    """
+
+    async with ClientSession(connector=aiohttp.TCPConnector(resolver=DefaultResolver())) as session:
+        async with session.get(url, params=params) as response:
+            data = await response.json()
+            return data
+
+
 def get_eth_price() -> float:
     """
     Получает цену ETH с API wowmax
@@ -124,15 +141,13 @@ def get_eth_price() -> float:
     """
     for _ in range(3):
         try:
-            with Client() as session:
-                uri = 'https://api-gateway.wowmax.exchange/prices'
-                response = session.get(uri)
-                response.raise_for_status()
-            for token in response.json():
+            response = get('https://api-gateway.wowmax.exchange/prices')
+            data = response.json()
+            for token in data:
                 if token['symbol'] == 'ETH':
                     return token['price']
             asyncio.sleep(5)
         except Exception:
             asyncio.sleep(5)
-    logger.error(f"Не можем получить цену ETH, ставим 2300")
+    logger.error(f"Не можем получить цену ETH, ставим ~2300")
     return random_amount(2200, 2400)

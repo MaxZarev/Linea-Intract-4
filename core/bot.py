@@ -8,8 +8,7 @@ from core.onchain import Tokens, Onchain
 from core.daps import Zeroland, Wowmax, Nile
 from loader import config
 from database import Accounts
-from models import Account
-from models import Quest
+from models import Account, Quest
 from utils import random_sleep
 
 
@@ -99,11 +98,12 @@ class Bot:
                 logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
                 raise e
 
-    async def run_quest(self, quest_number: int, quest_text: str, attemps: int = 3) -> None:
+    async def run_quest(self, quest_number: int, quest_text: str, attemtps: int = 3) -> None:
         """
         Выполнение квеста.
         :param quest_number: номер квеста
         :param quest_text: текст квеста, для поиска кнопок.
+        :param attempts: количество попыток запустить квест
         :return: None
         """
         try:
@@ -135,7 +135,7 @@ class Bot:
         except Exception as e:
             logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квеста {quest_number} {e}")
             if attemps:
-                await self.run_quest(quest_number, quest_text, attemps - 1)
+                await self.run_quest(quest_number, quest_text, attemtps - 1)
 
     async def open_interact(self) -> None:
         """

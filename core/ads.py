@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Optional
 import asyncio
 
-from httpx import AsyncClient
+import aiohttp
+from aiohttp import ClientSession, DefaultResolver
 from loguru import logger
 
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Locator
@@ -11,6 +12,7 @@ from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 from models import Account
 from loader import config
 from utils import random_sleep
+from utils.utils import get_request
 
 lock = asyncio.Lock()
 
@@ -25,7 +27,6 @@ class Ads:
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
         self.page: Optional[Page] = None
-        self.session = AsyncClient()
         self.metamask = Metamask(self)
 
     async def run(self):
@@ -56,28 +57,34 @@ class Ads:
         Открывает браузер в ADS по номеру профиля
         :return: параметры запущенного браузера
         """
-        params = dict(serial_number=self.profile_number)
-        url = self.local_api_url + 'browser/start'
-        async with lock:
-            await random_sleep(1, 2)
-            response = await self.session.get(url, params=params)
-        data = response.json()
-        return data.get('data').get('ws').get('puppeteer')
+        try:
+            params = dict(serial_number=self.profile_number)
+            url = self.local_api_url + 'browser/start'
+            async with lock:
+                await random_sleep(1, 2)
+                data = await get_request(url, params)
+            return data.get('data').get('ws').get('puppeteer')
+        except Exception as e:
+            logger.error(f"{self.profile_number}: Ошибка при открытии браузера: {e}")
+            raise e
 
     async def _check_browser_status(self) -> Optional[str]:
         """
         Проверяет статус браузера в ADS по номеру профиля
         :return: параметры запущенного браузера
         """
-        params = dict(serial_number=self.profile_number)
-        url = self.local_api_url + 'browser/active'
-        async with lock:
-            await random_sleep(1, 2)
-            response = await self.session.get(url, params=params)
-        data = response.json()
-        if data['data']['status'] == 'Active':
-            return data.get('data').get('ws').get('puppeteer')
-        return None
+        try:
+            params = dict(serial_number=self.profile_number)
+            url = self.local_api_url + 'browser/active'
+            async with lock:
+                await random_sleep(1, 2)
+                data = await get_request(url, params)
+            if data['data']['status'] == 'Active':
+                return data.get('data').get('ws').get('puppeteer')
+            return None
+        except Exception as e:
+            logger.error(f"{self.profile_number}: Ошибка при проверке статуса браузера: {e}")
+            raise e
 
     async def _start_browser(self, attempts: int = 3) -> Browser:
         """
@@ -89,7 +96,7 @@ class Ads:
             if not (endpoint := await self._check_browser_status()):
                 await asyncio.sleep(3)
                 endpoint = await self._open_browser()
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
             pw = await async_playwright().start()
             return await pw.chromium.connect_over_cdp(endpoint, slow_mo=1000)
         except Exception as e:
@@ -124,11 +131,10 @@ class Ads:
         async with lock:
             await random_sleep(1, 2)
             try:
-                await self.session.get(url, params=params)
+                await get_request(url, params)
             except Exception as e:
                 logger.error(f"{self.profile_number} Ошибка при остановке браузера: {e}")
                 raise e
-        await self.session.aclose()
 
     async def catch_page(self, url_contains: str, timeout: int = 10) -> Optional[Page]:
         """
@@ -167,13 +173,14 @@ class Ads:
         url = self.local_api_url + 'user/update'
         async with lock:
             await random_sleep(1, 2)
-            response = await self.session.post(url, json=data, headers={"Content-Type": "application/json"})
-        response.raise_for_status()
+            async with ClientSession(connector=aiohttp.TCPConnector(resolver=DefaultResolver())) as session:
+                async with session.post(url, json=data, headers={"Content-Type": "application/json"}) as response:
+                    await response.text()
 
         # смена ip мобильных прокси если включена
         if config.is_mobile_proxy:
             try:
-                await self.session.get(config.link_change_ip)
+                await get_request(config.link_change_ip)
             except:
                 logger.warning(f"{self.profile_number}: Ошибка смены ip мобильного прокси")
                 pass
@@ -187,9 +194,8 @@ class Ads:
         params = {"serial_number": self.profile_number}
         async with lock:
             await random_sleep(1, 2)
-            response = await self.session.get(url, params=params)
-        if response.status_code == 200:
-            return response.json()['data']['list'][0]['user_id']
+            data = await get_request(url, params)
+        return data['data']['list'][0]['user_id']
 
 
 class Metamask:
@@ -204,7 +210,7 @@ class Metamask:
         :return: None
         """
         await self.ads.page.goto(self.url, wait_until='load')
-        authorized_checker = self.ads.page.get_by_test_id('home__nfts-tab')
+        authorized_checker = self.ads.page.get_by_test_id('account-options-menu-button')
         if await authorized_checker.count() > 0:
             logger.info(f'{self.ads.profile_number}: Уже авторизован в метамаске')
             return
@@ -212,7 +218,7 @@ class Metamask:
         await self.ads.page.get_by_test_id('unlock-password').fill(self.password)
         await self.ads.page.get_by_test_id('unlock-submit').click()
         await self.ads.page.wait_for_load_state('load')
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         if await self.ads.page.get_by_test_id('popover-close').count() > 0:
             await self.ads.page.get_by_test_id('popover-close').click()
             logger.info(f'{self.ads.profile_number}: Авторизован в метамаске')
