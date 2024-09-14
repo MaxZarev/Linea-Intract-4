@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from random import shuffle
 
 from loguru import logger
@@ -15,7 +16,6 @@ semaphore = asyncio.Semaphore(config.threads)
 def d_semaphore(func):
     async def wrapper(*args, **kwargs):
         async with semaphore:
-            await asyncio.sleep(1)
             result = await func(*args, **kwargs)
             return result
     return wrapper
@@ -50,4 +50,8 @@ async def main():
 
 
 if __name__ == '__main__':
+
+    if sys.platform.startswith('win'):
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     asyncio.run(main())
