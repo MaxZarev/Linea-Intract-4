@@ -66,7 +66,7 @@ def get_accounts() -> list[Account]:
         proxies = ['1.1.1.1:1111'] * len(profiles)
 
     if not withdraw_addresses:
-        proxies = ['0x'] * len(profiles)
+        withdraw_addresses = ['0x'] * len(profiles)
 
     if len(profiles) != len(private_keys) != len(proxies) != len(passwords) != len(withdraw_addresses):
         raise ValueError("Количество аккаунтов, прокси, приватных ключей, паролей и адресов вывода должно быть одинаковым")
