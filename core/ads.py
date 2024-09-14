@@ -239,7 +239,8 @@ class Metamask:
         metamask_page = await page_catcher.value
         await metamask_page.wait_for_load_state('load')
         await metamask_page.get_by_test_id('page-container-footer-next').click()
-        if await metamask_page.get_by_test_id('page-container-footer-next').count() > 0:
+        await random_sleep(1, 3)
+        if not metamask_page.is_closed():
             await metamask_page.get_by_test_id('page-container-footer-next').click()
 
     async def confirm_tx(self, locator) -> None:
