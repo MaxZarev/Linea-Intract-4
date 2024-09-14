@@ -134,7 +134,7 @@ class Bot:
                     await self.interact_quest(quest_number, quest_text)
         except Exception as e:
             logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квеста {quest_number} {e}")
-            if attemps:
+            if attemtps:
                 await self.run_quest(quest_number, quest_text, attemtps - 1)
 
     async def open_interact(self) -> None:
