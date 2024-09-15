@@ -24,7 +24,7 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Версия скрипта 1.0.8')
+    print('Версия скрипта 1.1.0')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
