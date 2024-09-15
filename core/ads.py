@@ -264,7 +264,7 @@ class Metamask:
         await metamask_page.wait_for_load_state('load')
 
         confirm_button = metamask_page.get_by_test_id('page-container-footer-next')
-        if await confirm_button.count() > 0:
+        if not await confirm_button.count():
             confirm_button = metamask_page.get_by_test_id('confirm-footer-button')
 
         await confirm_button.click()

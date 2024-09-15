@@ -156,7 +156,7 @@ class Bot:
             if signature_page:
                 await signature_page.wait_for_load_state('load')
                 confirm_button = signature_page.get_by_test_id('page-container-footer-next')
-                if await confirm_button.count() > 0:
+                if not await confirm_button.count():
                     confirm_button = signature_page.get_by_test_id('confirm-footer-button')
                 await confirm_button.click()
                 await asyncio.sleep(5)
