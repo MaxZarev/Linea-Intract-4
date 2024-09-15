@@ -136,21 +136,25 @@ class Ads:
                 logger.error(f"{self.profile_number} Ошибка при остановке браузера: {e}")
                 raise e
 
-    async def catch_page(self, url_contains: str, timeout: int = 10) -> Optional[Page]:
+    async def catch_page(self, url_contains: str | list[str] = None, timeout: int = 10) -> \
+            Optional[Page]:
         """
         Ищет страницу по частичному совпадению url.
-        Вызывает исключение если страница не найдена в течении timeout секунд.
-        :param url_contains: текст, который ищем в url
+        :param url_contains: текст, который ищем в url или список текстов
         :param timeout:  время ожидания
-        :return: страница с нужным url
+        :return: страница с нужным url или None
         """
+        if isinstance(url_contains, str):
+            url_contains = [url_contains]
+
         for attempt in range(timeout):
             for page in self.context.pages:
-                if url_contains in page.url:
-                    return page
-                await asyncio.sleep(1)
-                if attempt == 5:
-                    await self.pages_context_reload()
+                for url in url_contains:
+                    if url in page.url:
+                        return page
+                    if attempt and attempt % 5 == 0:
+                        await self.pages_context_reload()
+                    await asyncio.sleep(1)
 
         logger.warning(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
         return None
@@ -188,7 +192,8 @@ class Ads:
         async with lock:
             await random_sleep(1, 2)
             async with ClientSession(connector=aiohttp.TCPConnector(resolver=DefaultResolver())) as session:
-                async with session.post(url, json=data, headers={"Content-Type": "application/json"}) as response:
+                async with session.post(url, json=data,
+                                        headers={"Content-Type": "application/json"}) as response:
                     await response.text()
 
         # смена ip мобильных прокси если включена
@@ -257,7 +262,7 @@ class Metamask:
                 await locator.click()
             metamask_page = await page_catcher.value
         except:
-            metamask_page = await self.ads.catch_page('connect') or await self.ads.catch_page('confirm-transaction')
+            metamask_page = await self.ads.catch_page(['connect', 'confirm-transaction'])
             if not metamask_page:
                 raise Exception(f"Error: {self.ads.profile_number} Ошибка подключения метамаска")
 
@@ -271,15 +276,3 @@ class Metamask:
         await random_sleep(1, 3)
         if not metamask_page.is_closed():
             await confirm_button.click()
-
-    async def confirm_tx(self, locator) -> None:
-        """
-        Подтверждает транзакцию во всплывающем окне метамаска.
-        :param locator: локатор кнопки вызывающей подтверждение транзакции
-        :return: None
-        """
-        async with self.ads.context.expect_page() as page_catcher:
-            locator.click()
-        metamask_page = await page_catcher.value
-        await metamask_page.wait_for_load_state('load')
-        await metamask_page.get_by_test_id('page-container-footer-next').click()
