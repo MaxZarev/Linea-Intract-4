@@ -14,8 +14,8 @@ class ConfigSingleton(metaclass=SingletonMeta):
     def __init__(self):
         from utils import load_config
         from utils import setup
-        self.config = load_config()
         setup()
+        self.config = load_config()
 
 
 config = ConfigSingleton().config

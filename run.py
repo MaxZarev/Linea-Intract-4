@@ -1,12 +1,10 @@
 import asyncio
-import sys
 from random import shuffle
 
-from loguru import logger
-
-from database.settings import initialize_database, close_database
 from loader import config
 
+from database import initialize_database, close_database
+from loguru import logger
 from core.bot import Bot
 from models import Account
 from database import Accounts
@@ -36,7 +34,7 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Версия скрипта 1.0.3')
+    print('Версия скрипта 1.0.4')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')

@@ -1,8 +1,6 @@
 import asyncio
 import random
 
-from loguru import logger
-
 from core.ads import Ads
 from core.onchain import Tokens, Onchain
 from core.daps import Zeroland, Wowmax, Nile
@@ -11,6 +9,7 @@ from database import Accounts
 from models import Account, Quest
 from utils import random_sleep
 
+from loguru import logger
 
 class Bot:
 
@@ -26,6 +25,7 @@ class Bot:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.ads.close_browser()
+        await self.onchain.w3.provider.disconnect()
         await self.onchain.w3.provider.disconnect()
         await self.zeroland.w3.provider.disconnect()
         await self.wowmax.w3.provider.disconnect()
