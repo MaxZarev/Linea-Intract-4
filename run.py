@@ -25,7 +25,7 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Версия скрипта 1.0.5')
+    print('Версия скрипта 1.0.6')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
@@ -34,6 +34,9 @@ async def main():
 
     complete_accounts = await Accounts.get_complete_accounts()
     accounts_for_work = [account for account in config.accounts if account.profile_number not in complete_accounts]
+
+    print(f'Всего аккаунтов: {len(config.accounts)}')
+    print(f'Завершенные аккаунты: {len(complete_accounts)}')
 
     if config.shuffle_profiles:
         shuffle(accounts_for_work)
