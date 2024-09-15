@@ -13,8 +13,6 @@ class ConfigSingleton(metaclass=SingletonMeta):
     """Создание конфига в одном экземпляре"""
     def __init__(self):
         from utils import load_config
-        from utils import setup
-        setup()
         self.config = load_config()
 
 

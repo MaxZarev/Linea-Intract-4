@@ -144,12 +144,12 @@ class Ads:
         :param timeout:  время ожидания
         :return: страница с нужным url
         """
-        for _ in range(timeout):
+        for attempt in range(timeout):
             for page in self.context.pages:
                 if url_contains in page.url:
                     return page
                 await asyncio.sleep(1)
-                if timeout == 5:
+                if attempt == 5:
                     await self.pages_context_reload()
 
         logger.warning(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
@@ -161,6 +161,7 @@ class Ads:
         :return: None
         """
         await self.context.new_page()
+        await random_sleep(1, 2)
         for page in self.context.pages:
             if 'about:blank' in page.url:
                 await page.close()
@@ -222,6 +223,10 @@ class Metamask:
         Авторизация в метамаске
         :return: None
         """
+        if self.ads.page.is_closed():
+            self.ads.page = await self.ads.context.new_page()
+            await self.ads._prepare_browser()
+
         await self.ads.page.goto(self.url, wait_until='load')
         authorized_checker = self.ads.page.get_by_test_id('account-options-menu-button')
         if await authorized_checker.count() > 0:
@@ -252,13 +257,20 @@ class Metamask:
                 await locator.click()
             metamask_page = await page_catcher.value
         except:
-            metamask_page = await self.ads.catch_page('connect') or await self.ads.catch_page('signature-request')
+            metamask_page = await self.ads.catch_page('connect') or await self.ads.catch_page('confirm-transaction')
+            if not metamask_page:
+                raise Exception(f"Error: {self.ads.profile_number} Ошибка подключения метамаска")
 
         await metamask_page.wait_for_load_state('load')
-        await metamask_page.get_by_test_id('page-container-footer-next').click()
+
+        confirm_button = metamask_page.get_by_test_id('page-container-footer-next')
+        if await confirm_button.count() > 0:
+            confirm_button = metamask_page.get_by_test_id('confirm-footer-button')
+
+        await confirm_button.click()
         await random_sleep(1, 3)
         if not metamask_page.is_closed():
-            await metamask_page.get_by_test_id('page-container-footer-next').click()
+            await confirm_button.click()
 
     async def confirm_tx(self, locator) -> None:
         """

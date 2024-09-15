@@ -8,6 +8,7 @@ from loguru import logger
 from core.bot import Bot
 from models import Account
 from database import Accounts
+from utils import setup
 
 semaphore = asyncio.Semaphore(config.threads)
 
@@ -15,13 +16,11 @@ semaphore = asyncio.Semaphore(config.threads)
 async def worker(account: Account):
     async with semaphore:
         logger.info(f'{account.profile_number}: Запуск аккаунта')
-        for attempt in range(2):
-            async with Bot(account) as bot:
-                try:
-                    await bot.run()
-                except Exception as e:
-                    logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
-                    logger.info(f'{account.profile_number}: Пробуем еще раз')
+        async with Bot(account) as bot:
+            try:
+                await bot.run()
+            except Exception as e:
+                logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
 
 
 async def main():
@@ -47,4 +46,5 @@ async def main():
 
 
 if __name__ == '__main__':
+    setup()
     asyncio.run(main())

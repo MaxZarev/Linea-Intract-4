@@ -152,11 +152,14 @@ class Bot:
             await self.ads.page.get_by_text('Sign In').click()
             await self.ads.metamask.connect(self.ads.page.locator('//div[text()="MetaMask"]'))
             await asyncio.sleep(5)
-            signature_page = await self.ads.catch_page('signature-request')
+            signature_page = await self.ads.catch_page('confirm-transaction')
             if signature_page:
                 await signature_page.wait_for_load_state('load')
-                await signature_page.get_by_test_id('page-container-footer-next').click()
-                await self.ads.page.wait_for_load_state('load')
+                confirm_button = signature_page.get_by_test_id('page-container-footer-next')
+                if await confirm_button.count() > 0:
+                    confirm_button = signature_page.get_by_test_id('confirm-footer-button')
+                await confirm_button.click()
+                await asyncio.sleep(5)
 
     async def interact_quest(self, quest_number: int, quest_text: str) -> None:
         """
