@@ -83,15 +83,9 @@ class Bot:
         :param quests: список квестов
         :return: None
         """
-        for _ in range(3):
-            try:
-                for quest in quests:
-                    logger.info(f"{self.ads.profile_number}: Запускаем квест {quest.number} {quest.text}")
-                    await self.run_quest(quest.number, quest.text)
-                return
-            except Exception as e:
-                logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
-                raise e
+        for quest in quests:
+            logger.info(f"{self.ads.profile_number}: Запускаем квест {quest.number} {quest.text}")
+            await self.run_quest(quest.number, quest.text)
 
     async def run_quest(self, quest_number: int, quest_text: str, attemtps: int = 3) -> None:
         """
@@ -131,6 +125,7 @@ class Bot:
             logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квеста {quest_number} {e}")
             if attemtps:
                 await self.run_quest(quest_number, quest_text, attemtps - 1)
+            raise e
 
     async def open_interact(self) -> None:
         """
@@ -143,7 +138,7 @@ class Bot:
             await self.open_interact()
         await random_sleep(3, 5)
 
-        if await self.ads.page.get_by_text('Sign In').count() > 0:
+        if not await self.ads.page.get_by_text('Sign In').count():
             logger.info(f"{self.ads.profile_number}: Запускаем подключение кошелька")
             await self.ads.page.get_by_text('Sign In').click()
             await self.ads.metamask.connect(self.ads.page.locator('//div[text()="MetaMask"]'))

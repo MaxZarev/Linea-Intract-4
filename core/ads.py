@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import Optional
 import asyncio
 
-import aiohttp
-from aiohttp import ClientSession, DefaultResolver
+from aiohttp import ClientSession
 from loguru import logger
 
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Locator
@@ -111,6 +110,7 @@ class Ads:
         Закрывает все страницы кроме текущей
         :return: None
         """
+        await self.page.set_viewport_size({'width': 1920, 'height': 1080})
         try:
             for page in self.context.pages:
                 if page != self.page:
@@ -191,7 +191,7 @@ class Ads:
         url = self.local_api_url + 'user/update'
         async with lock:
             await random_sleep(1, 2)
-            async with ClientSession(connector=aiohttp.TCPConnector(resolver=DefaultResolver())) as session:
+            async with ClientSession() as session:
                 async with session.post(url, json=data,
                                         headers={"Content-Type": "application/json"}) as response:
                     await response.text()
@@ -276,3 +276,76 @@ class Metamask:
         await random_sleep(1, 3)
         if not metamask_page.is_closed():
             await confirm_button.click()
+
+
+    # async def import_wallet(self):
+    #     """
+    #     Импортирует кошелек в metamask
+    #     :return:
+    #     """
+    #
+    #     if self.ads.page.is_closed():
+    #         self.ads.page = await self.ads.context.new_page()
+    #         await self.ads._prepare_browser()
+    #
+    #     await self.ads.page.goto(self.url, wait_until='load')
+    #
+    #     authorized_checker = self.ads.page.get_by_test_id('account-options-menu-button')
+    #
+    #     if await authorized_checker.count():
+    #         logger.info(f'{self.ads.profile_number}: Уже авторизован в метамаске')
+    #         return
+    #
+    #     if await self.ads.page.get_by_test_id('unlock-password').count():
+    #         await self.authorize()
+    #
+    #     self.open_metamask()
+    #
+    #     seed_list = self.seed.split(" ")
+    #     if not self.password:
+    #         self.password = generate_password()
+    #
+    #     if self.ads.find_element("//button[@data-testid='onboarding-create-wallet']", 5):
+    #         self.ads.click_element("//input[@data-testid='onboarding-terms-checkbox']")
+    #         sleep_random()
+    #         self.ads.click_element("//button[@data-testid='onboarding-import-wallet']")
+    #         self.ads.click_element("//button[@data-testid='metametrics-no-thanks']")
+    #         for i, word in enumerate(seed_list):
+    #             self.ads.input_text(f"//input[@data-testid='import-srp__srp-word-{i}']", word)
+    #         self.ads.click_element("//button[@data-testid='import-srp-confirm']")
+    #         self.ads.input_text("//input[@data-testid='create-password-new']", self.password)
+    #         self.ads.input_text("//input[@data-testid='create-password-confirm']", self.password)
+    #         sleep_random()
+    #         self.ads.click_element("//input[@data-testid='create-password-terms']")
+    #         self.ads.click_element("//button[@data-testid='create-password-import']")
+    #
+    #         sleep_random(3, 5)
+    #         self.ads.click_element("//button[@data-testid='onboarding-complete-done']")
+    #
+    #         sleep_random()
+    #         self.ads.click_element("//button[@data-testid='pin-extension-next']")
+    #         sleep_random()
+    #         self.ads.click_element("//button[@data-testid='pin-extension-done']")
+    #         sleep_random(3, 3)
+    #         self.ads.click_element("//button[@data-testid='popover-close']", 5)
+    #         sleep_random()
+    #     else:
+    #         self.ads.click_element("//a[text()='Forgot password?']", 5)
+    #         for i, word in enumerate(seed_list):
+    #             self.ads.input_text(f"//input[@data-testid='import-srp__srp-word-{i}']", word)
+    #         self.ads.input_text("//input[@data-testid='create-vault-password']", self.password)
+    #         self.ads.input_text("//input[@data-testid='create-vault-confirm-password']", self.password)
+    #         self.ads.click_element("//button[@data-testid='create-new-vault-submit-button']")
+    #         sleep_random(3, 3)
+    #         self.ads.click_element("//button[@data-testid='popover-close']", 5)
+    #
+    #     self.ads.click_element("//button[@data-testid='account-options-menu-button']")
+    #     sleep_random()
+    #
+    #     self.ads.click_element("//button[@data-testid='account-list-menu-details']")
+    #     sleep_random()
+    #
+    #     address = self.ads.get_text("//button[@data-testid='address-copy-button-text']/span/div")
+    #     sleep_random()
+    #
+    #     write_text_to_file("new_wallets.txt", f"{self.ads.profile_number} {address} {self.password} {self.seed}")

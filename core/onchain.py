@@ -11,7 +11,7 @@ from web3.contract import AsyncContract
 from web3.eth import AsyncEth
 from web3.types import TxParams, TxReceipt, Wei
 
-from core.okx import OKX
+from core.okx_client import OKX
 from loader import config
 from models import ContractTemp, Account, Amount
 from utils import random_amount, random_sleep

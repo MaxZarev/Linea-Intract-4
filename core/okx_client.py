@@ -1,8 +1,8 @@
 import asyncio
 from typing import Literal
 
-import ccxt.async_support as ccxt
 from loguru import logger
+from okx import Funding
 
 from loader import config
 from models import Account
@@ -11,14 +11,14 @@ from models import Account
 class OKX:
     def __init__(self, account: Account):
         self.profile_number = account.profile_number
-        self.exchange = ccxt.okx({
-            "apiKey": config.okx.get("okx_api_key"),
-            "secret": config.okx.get("okx_secret_key"),
-            "password": config.okx.get("okx_passphrase"),
-            "options": {
-                "defaultType": "future"
-            }
-        })
+
+        self.funding_api = Funding.FundingAPI(
+            config.okx.get("okx_api_key"),
+            config.okx.get("okx_secret_key"),
+            config.okx.get("okx_passphrase"),
+            flag="0",
+            debug=False
+        )
 
     async def okx_withdraw(
             self,
@@ -37,28 +37,23 @@ class OKX:
         """
         token_with_chain = token + "-" + chain
         fee = await self._get_withdrawal_fee(token, token_with_chain)
+
         try:
-            response = await self.exchange.withdraw(
-                code=token,
-                amount=amount,
-                address=address,
-                params={
-                    "toAddress": address,
-                    "chainName": token_with_chain,
-                    "dest": 4,
-                    "fee": fee,
-                    "pwd": '-',
-                    "amt": amount,
-                    "network": chain
-                }
-            )
-            tx_id = response.get("id")
             logger.info(f'{self.profile_number}: Выводим с okx {amount} {token}')
+            response = self.funding_api.withdrawal(
+                ccy=token,
+                amt=amount,
+                dest=4,
+                toAddr=address,
+                fee=fee,
+                chain=token_with_chain,
+            )
+            if response.get("code") != "0":
+                raise Exception(f'{self.profile_number}: Не удалось вывести {amount} {token}: {response.get("msg")}')
+            tx_id = response.get("data")[0].get("wdId")
             await self.wait_confirm(tx_id)
             logger.info(f'{self.profile_number}: Успешно выведено {amount} {token}')
-            await self.exchange.close()
         except Exception as error:
-            await self.exchange.close()
             logger.error(f'{self.profile_number}: Не удалось вывести {amount} {token}: {error} ')
             raise error
 
@@ -69,21 +64,11 @@ class OKX:
         :param token_with_chain: айди токен-сеть
         :return:
         """
-        currencies = await self.exchange.fetch_currencies()
-        for currency in currencies:
-            if currency == token:
-                currency_info = currencies[currency]
-                network_info = currency_info.get('networks', None)
-                if network_info:
-                    for network in network_info:
-                        network_data = network_info[network]
-                        network_id = network_data['id']
-                        if network_id == token_with_chain:
-                            withdrawal_fee = currency_info['networks'][network]['fee']
-                            if withdrawal_fee == 0:
-                                return 0
-                            else:
-                                return withdrawal_fee
+        response = self.funding_api.get_currencies(token)
+        for network in response.get("data"):
+            if network.get("chain") == token_with_chain:
+                return network.get("minFee")
+
         logger.error(f" не могу получить сумму комиссии, проверьте значения symbolWithdraw и network")
         return 0
 
@@ -94,10 +79,11 @@ class OKX:
         :return: None
         """
         for _ in range(30):
-            tx_info = await self.exchange.fetch_withdrawal(tx_id)
-            if tx_info.get("status") == "ok":
-                logger.debug(f"{self.profile_number}: Транзакция {tx_id} завершена")
-                return
+            tx_info = self.funding_api.get_deposit_withdraw_status(wdId=tx_id)
+            if tx_info.get("code") == "0":
+                if 'Withdrawal complete' in tx_info.get("data")[0].get("state"):
+                    logger.debug(f"{self.profile_number}: Транзакция {tx_id} завершена")
+                    return
             await asyncio.sleep(10)
         logger.error(f"{self.profile_number}: Ошибка транзакция {tx_id} не завершена")
         raise Exception(f"{self.profile_number} Транзакция {tx_id} не завершена")

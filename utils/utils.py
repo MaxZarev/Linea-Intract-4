@@ -4,9 +4,8 @@ import asyncio
 import os
 from random import uniform
 
-import aiohttp
 import yaml
-from aiohttp import ClientSession, DefaultResolver
+from aiohttp import ClientSession
 from requests import get
 from better_proxy import Proxy
 from loguru import logger
@@ -63,11 +62,10 @@ def get_accounts() -> list[Account]:
     passwords = read_file(os.path.join(CONFIG_DATA_PATH, "passwords.txt"))
     proxies = read_file(os.path.join(CONFIG_DATA_PATH, "proxies.txt"), check_empty=False)
     withdraw_addresses = read_file(os.path.join(CONFIG_DATA_PATH, "withdraw_addresses.txt"), check_empty=False)
-
-    if not proxies:
+    if not proxies or 'заполнить' in proxies:
         proxies = ['1.1.1.1:1111'] * len(profiles)
 
-    if not withdraw_addresses:
+    if not withdraw_addresses or 'вставьте' in withdraw_addresses:
         withdraw_addresses = ['0x'] * len(profiles)
 
     if len(profiles) != len(private_keys) != len(proxies) != len(passwords) != len(withdraw_addresses):
@@ -128,7 +126,7 @@ async def get_request(url: str, params: dict = None) -> dict:
     :return: ответ
     """
 
-    async with ClientSession(connector=aiohttp.TCPConnector(resolver=DefaultResolver())) as session:
+    async with ClientSession() as session:
         async with session.get(url, params=params) as response:
             data = await response.json()
             return data
