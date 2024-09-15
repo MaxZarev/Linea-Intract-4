@@ -110,7 +110,8 @@ class Ads:
         Закрывает все страницы кроме текущей
         :return: None
         """
-        await self.page.set_viewport_size({'width': 1920, 'height': 1080})
+        # todo: провести тесты смены разрешения экрана
+        # await self.page.set_viewport_size({'width': 1920, 'height': 1080})
         try:
             for page in self.context.pages:
                 if page != self.page:
