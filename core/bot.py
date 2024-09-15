@@ -83,11 +83,19 @@ class Bot:
         :param quests: список квестов
         :return: None
         """
-        for quest in quests:
-            logger.info(f"{self.ads.profile_number}: Запускаем квест {quest.number} {quest.text}")
-            await self.run_quest(quest.number, quest.text)
+        for attempt in range(3):
+            try:
+                for quest in quests:
+                    logger.info(f"{self.ads.profile_number}: Запускаем квест {quest.number} {quest.text}")
+                    await self.run_quest(quest.number, quest.text)
+                break
+            except Exception as e:
+                logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
+                if attempt == 2:
+                    raise e
 
-    async def run_quest(self, quest_number: int, quest_text: str, attemtps: int = 3) -> None:
+
+    async def run_quest(self, quest_number: int, quest_text: str) -> None:
         """
         Выполнение квеста.
         :param quest_number: номер квеста
@@ -123,8 +131,6 @@ class Bot:
                     await self.interact_quest(quest_number, quest_text)
         except Exception as e:
             logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квеста {quest_number} {e}")
-            if attemtps:
-                await self.run_quest(quest_number, quest_text, attemtps - 1)
             raise e
 
     async def open_interact(self) -> None:
@@ -169,8 +175,9 @@ class Bot:
 
         await self.ads.page.get_by_text(quest_text).scroll_into_view_if_needed()
         await self.ads.page.get_by_text(quest_text).click()
+        await random_sleep(3, 5)
         await self.ads.page.locator('div.modal-dialog:visible').get_by_role('button').filter(
-            has_not_text='Continue').click()
+            has_not_text='Continue', has=self.ads.page.locator('i')).first.click()
         verify_button = self.ads.page.get_by_role('button', name='Verify')
         await verify_button.scroll_into_view_if_needed()
         await verify_button.click()
