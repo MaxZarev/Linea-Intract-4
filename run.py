@@ -16,15 +16,15 @@ semaphore = asyncio.Semaphore(config.threads)
 async def worker(account: Account):
     async with semaphore:
         logger.info(f'{account.profile_number}: Запуск аккаунта')
-        async with Bot(account) as bot:
-            try:
+        try:
+            async with Bot(account) as bot:
                 await bot.run()
-            except Exception as e:
+        except Exception as e:
                 logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
 
 
 async def main():
-    print('Версия скрипта 1.0.7')
+    print('Версия скрипта 1.0.8')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
@@ -41,7 +41,7 @@ async def main():
         shuffle(accounts_for_work)
 
     tasks = [worker(account) for account in accounts_for_work]
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
     await close_database()
 
 
