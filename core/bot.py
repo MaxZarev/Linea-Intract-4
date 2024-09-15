@@ -26,7 +26,6 @@ class Bot:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.ads.close_browser()
         await self.onchain.w3.provider.disconnect()
-        await self.onchain.w3.provider.disconnect()
         await self.zeroland.w3.provider.disconnect()
         await self.wowmax.w3.provider.disconnect()
         await self.nile.w3.provider.disconnect()

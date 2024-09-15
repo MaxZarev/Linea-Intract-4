@@ -96,3 +96,16 @@ class Accounts(Model):
                 account.quest_3_status,
                 account.quest_4_status
             ])
+    @classmethod
+    async def get_complete_accounts(cls) -> list[int]:
+        """
+        Возвращает список номеров аккаунтов у которых выполнены все квесты
+        :return: список аккаунтов
+        """
+        accounts =  await cls.filter(
+            quest_1_status=True,
+            quest_2_status=True,
+            quest_3_status=True,
+            quest_4_status=True
+        )
+        return [account.profile_number for account in accounts]

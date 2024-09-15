@@ -149,8 +149,22 @@ class Ads:
                 if url_contains in page.url:
                     return page
                 await asyncio.sleep(1)
+                if timeout == 5:
+                    await self.pages_context_reload()
+
         logger.warning(f"{self.profile_number} Ошибка страница не найдена: {url_contains}")
         return None
+
+    async def pages_context_reload(self):
+        """
+        Перезагружает контекст страниц
+        :return: None
+        """
+        await self.page.reload()
+        await self.context.new_page()
+        for page in self.context.pages:
+            if 'about:blank' in page.url:
+                await page.close()
 
     async def set_proxy(self) -> None:
         """
@@ -234,9 +248,13 @@ class Metamask:
         :param locator: локатор кнопки подключения метамаска
         :return: None
         """
-        async with self.ads.context.expect_page() as page_catcher:
-            await locator.click()
-        metamask_page = await page_catcher.value
+        try:
+            async with self.ads.context.expect_page(timeout=10) as page_catcher:
+                await locator.click()
+            metamask_page = await page_catcher.value
+        except:
+            metamask_page = await self.ads.catch_page('connect') or await self.ads.catch_page('signature-request')
+
         await metamask_page.wait_for_load_state('load')
         await metamask_page.get_by_test_id('page-container-footer-next').click()
         await random_sleep(1, 3)
