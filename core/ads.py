@@ -160,7 +160,6 @@ class Ads:
         Перезагружает контекст страниц
         :return: None
         """
-        await self.page.reload()
         await self.context.new_page()
         for page in self.context.pages:
             if 'about:blank' in page.url:
