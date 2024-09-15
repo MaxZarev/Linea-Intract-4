@@ -24,7 +24,7 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Версия скрипта 1.0.6')
+    print('Версия скрипта 1.0.7')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
@@ -41,7 +41,7 @@ async def main():
         shuffle(accounts_for_work)
 
     tasks = [worker(account) for account in accounts_for_work]
-    await asyncio.gather(*tasks, return_exceptions=True)
+    await asyncio.gather(*tasks)
     await close_database()
 
 
