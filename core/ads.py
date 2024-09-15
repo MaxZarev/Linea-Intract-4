@@ -235,7 +235,7 @@ class Metamask:
 
         await self.ads.page.goto(self.url, wait_until='load')
         authorized_checker = self.ads.page.get_by_test_id('account-options-menu-button')
-        if await authorized_checker.count() > 0:
+        if await authorized_checker.count():
             logger.info(f'{self.ads.profile_number}: Уже авторизован в метамаске')
             return
 
@@ -243,11 +243,11 @@ class Metamask:
         await self.ads.page.get_by_test_id('unlock-submit').click()
         await self.ads.page.wait_for_load_state('load')
         await asyncio.sleep(10)
-        if await self.ads.page.get_by_test_id('popover-close').count() > 0:
+        if await self.ads.page.get_by_test_id('popover-close').count():
             await self.ads.page.get_by_test_id('popover-close').click()
             logger.info(f'{self.ads.profile_number}: Авторизован в метамаске')
 
-        if not await authorized_checker.count() > 0:
+        if not await authorized_checker.count():
             raise Exception(f"Error: {self.ads.profile_number} Ошибка авторизации в метамаске")
 
         logger.info(f"{self.ads.profile_number}: Авторизация в метамаске прошла успешно")

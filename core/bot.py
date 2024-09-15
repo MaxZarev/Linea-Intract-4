@@ -138,7 +138,7 @@ class Bot:
             await self.open_interact()
         await random_sleep(3, 5)
 
-        if not await self.ads.page.get_by_text('Sign In').count():
+        if await self.ads.page.get_by_text('Sign In').count():
             logger.info(f"{self.ads.profile_number}: Запускаем подключение кошелька")
             await self.ads.page.get_by_text('Sign In').click()
             await self.ads.metamask.connect(self.ads.page.locator('//div[text()="MetaMask"]'))
