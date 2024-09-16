@@ -22,3 +22,5 @@ class Config(BaseModel):
     link_change_ip: str
     is_withdraw_to_cex: bool
     min_balance: list[float, float]
+    tg_token: str
+    tg_chat_id: str

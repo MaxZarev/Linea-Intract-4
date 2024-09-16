@@ -13,18 +13,12 @@ from utils import setup
 
 async def worker(account: Account):
     async with semaphore:
-        logger.info(f'{account.profile_number}: Запуск аккаунта')
-        try:
-            async with Bot(account) as bot:
-                await asyncio.wait_for(bot.run(), timeout=900)
-        except asyncio.TimeoutError:
-            logger.error(f'{account.profile_number}: Превышено время выполнения')
-        except Exception as e:
-            logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
+        async with Bot(account) as bot:
+            await asyncio.wait_for(bot.run(), timeout=900)
 
 
 async def main():
-    print('Тестовый билд 1')
+    print('Тестовый билд 2')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
@@ -41,7 +35,7 @@ async def main():
     if config.shuffle_profiles:
         shuffle(accounts_for_work)
 
-    tasks = [worker(account) for account in accounts_for_work]
+    tasks = [worker(account) for account in config.accounts if account.profile_number > 608]
     await asyncio.gather(*tasks, return_exceptions=True)
     await close_database()
 

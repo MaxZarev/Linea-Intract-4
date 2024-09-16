@@ -7,7 +7,7 @@ from core.daps import Zeroland, Wowmax, Nile
 from loader import config
 from database import Accounts
 from models import Account, Quest
-from utils import random_sleep
+from utils import random_sleep, get_request
 
 from loguru import logger
 
@@ -22,11 +22,21 @@ class Bot:
         self.nile = Nile(account, self.wowmax)
 
     async def __aenter__(self):
+        await self.tg_alert(f"Запуск аккаунта {self.ads.profile_number}")
+        logger.info(f"Запуск аккаунта {self.ads.profile_number}")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.ads.close_browser()
-
+        if exc_type is None:
+            logger.success(f"Аккаунт {self.ads.profile_number} завершен")
+            await self.tg_alert(f"Аккаунт {self.ads.profile_number} завершен")
+        elif issubclass(exc_type, asyncio.TimeoutError):
+            logger.error(f"Аккаунт {self.ads.profile_number} завершен по таймауту")
+            await self.tg_alert(f"Аккаунт {self.ads.profile_number} завершен по таймауту")
+        else:
+            logger.error(f"Аккаунт {self.ads.profile_number} завершен с ошибкой {exc_val}")
+            await self.tg_alert(f"Аккаунт {self.ads.profile_number} завершен с ошибкой {exc_val}")
         return False
 
     async def run(self) -> None:
@@ -55,7 +65,6 @@ class Bot:
         if config.is_withdraw_to_cex:
             await self.onchain.withdraw_to_cex()
 
-        logger.success(f"{self.ads.profile_number}: Все квесты выполнены")
         # await get_request(f"/send_message", {
         #     "chat_id": config.telegram_chat_id,
         #     "mesage": f"Аккаунт {self.ads.profile_number} выполнил все квест
@@ -64,7 +73,6 @@ class Bot:
         # #     "chat_id": ,
         # #     "text": message
         # # })
-        
 
     async def shuffle_quest(self, quests: list[Quest]) -> None:
         """
@@ -214,9 +222,6 @@ class Bot:
 
         raise Exception(f"{self.ads.profile_number}: Квест {quest_number} не пройден")
 
-
-
-
     async def check_status(self, quest_number: int, quest_text: str) -> bool:
         """
         Проверяет статус квеста на сайте interact.io
@@ -231,3 +236,19 @@ class Bot:
             await Accounts.change_status(self.ads.profile_number, quest_number)
             return True
         return False
+
+    async def tg_alert(self, message: str) -> None:
+        """
+        Отправляет сообщение в телеграм
+        :param message: текст сообщения
+        :return: None
+        """
+        if not config.tg_token:
+            return
+
+        try:
+            url = f"https://api.telegram.org/bot{config.tg_token}/sendMessage"
+            await get_request(url, {"chat_id": config.tg_chat_id, "text": message})
+        except Exception as e:
+            logger.error(f"Не удалось отправить сообщение в телеграм {e}")
+
