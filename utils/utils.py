@@ -18,6 +18,7 @@ CONFIG_PATH = os.path.join(os.getcwd(), 'config')
 CONFIG_DATA_PATH = os.path.join(CONFIG_PATH, "data")
 CONFIG_PARAMS = os.path.join(CONFIG_PATH, "settings.yaml")
 
+
 def read_file(
         file_path: str,
         check_empty: bool = True,
@@ -63,7 +64,8 @@ def get_accounts() -> list[Account]:
     private_keys = read_file(os.path.join(CONFIG_DATA_PATH, "private_keys.txt"))
     passwords = read_file(os.path.join(CONFIG_DATA_PATH, "passwords.txt"))
     proxies = read_file(os.path.join(CONFIG_DATA_PATH, "proxies.txt"), check_empty=False)
-    withdraw_addresses = read_file(os.path.join(CONFIG_DATA_PATH, "withdraw_addresses.txt"), check_empty=False)
+    withdraw_addresses = read_file(os.path.join(CONFIG_DATA_PATH, "withdraw_addresses.txt"),
+                                   check_empty=False)
     if not proxies or 'заполнить' in proxies:
         proxies = ['1.1.1.1:1111'] * len(profiles)
 
@@ -71,10 +73,13 @@ def get_accounts() -> list[Account]:
         withdraw_addresses = ['0x'] * len(profiles)
 
     if len(profiles) != len(private_keys) != len(proxies) != len(passwords) != len(withdraw_addresses):
-        raise ValueError("Количество аккаунтов, прокси, приватных ключей, паролей и адресов вывода должно быть одинаковым")
+        raise ValueError(
+            "Количество аккаунтов, прокси, приватных ключей, паролей и адресов вывода должно быть одинаковым")
 
     accounts = []
-    for profile_number, private_key, password, proxy_str, withdraw_address in zip(profiles, private_keys, passwords, proxies, withdraw_addresses):
+    for profile_number, private_key, password, proxy_str, withdraw_address in zip(profiles, private_keys,
+                                                                                  passwords, proxies,
+                                                                                  withdraw_addresses):
         proxy = Proxy.from_str(proxy_str)
         accounts.append(Account(
             profile_number=profile_number,
@@ -110,6 +115,7 @@ def create_w3(rpc) -> AsyncWeb3:
     )
     return w3
 
+
 def random_amount(min_n: float, max_n: float, round_n: int = 4) -> float:
     """
     Генерирует случайное число с плавающей точкой, с возможностью округления
@@ -132,7 +138,6 @@ async def random_sleep(min_n: float, max_n: float):
     await asyncio.sleep(sleep_time)
 
 
-
 async def get_request(url: str, params: dict = None) -> dict:
     """
     GET запрос к API
@@ -146,6 +151,7 @@ async def get_request(url: str, params: dict = None) -> dict:
             response.raise_for_status()
             data = await response.json()
             return data
+
 
 def get_eth_price() -> float:
     """
