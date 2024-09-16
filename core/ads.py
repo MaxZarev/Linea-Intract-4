@@ -59,7 +59,7 @@ class Ads:
             async with lock:
                 await random_sleep(1, 2)
                 data = await get_request(url, params)
-            return data.get('data').get('ws').get('puppeteer')
+            return data['data']['ws']['puppeteer']
         except Exception as e:
             logger.error(f"{self.profile_number}: Ошибка при открытии браузера: {e}")
             raise e
@@ -76,31 +76,33 @@ class Ads:
                 await random_sleep(1, 2)
                 data = await get_request(url, params)
             if data['data']['status'] == 'Active':
-                return data.get('data').get('ws').get('puppeteer')
+                return data['data']['ws']['puppeteer']
             return None
         except Exception as e:
             logger.error(f"{self.profile_number}: Ошибка при проверке статуса браузера: {e}")
             raise e
 
-    async def _start_browser(self, attempts: int = 3) -> Browser:
+    async def _start_browser(self) -> Browser:
         """
         Запускает браузер в ADS по номеру профиля.
         Делает 3 попытки прежде чем вызвать исключение.
         :return: Browser
         """
-        try:
-            if not (endpoint := await self._check_browser_status()):
-                await asyncio.sleep(3)
-                endpoint = await self._open_browser()
-            await asyncio.sleep(10)
-            pw = await async_playwright().start()
-            return await pw.chromium.connect_over_cdp(endpoint, slow_mo=1000)
-        except Exception as e:
-            if attempts:
+        for attempt in range(3):
+            try:
+                if not (endpoint := await self._check_browser_status()):
+                    logger.info(f"{self.profile_number}: Запускаем браузер")
+                    await asyncio.sleep(3)
+                    endpoint = await self._open_browser()
                 await asyncio.sleep(5)
-                return await self._start_browser(attempts - 1)
-            logger.error(f"{self.profile_number}: Error не удалось запустить браузер, после 3 попыток: {e}")
-            raise e
+                pw = await async_playwright().start()
+                browser = await pw.chromium.connect_over_cdp(endpoint, slow_mo=1000)
+                if browser.is_connected():
+                    return browser
+                logger.error(f"{self.profile_number}: Error не удалось запустить браузер")
+            except Exception as e:
+                logger.error(f"{self.profile_number}: Error не удалось запустить браузер {e}")
+        raise Exception(f"{self.profile_number}: Error не удалось запустить браузер")
 
     async def _prepare_browser(self) -> None:
         """
@@ -111,8 +113,11 @@ class Ads:
         # await self.page.set_viewport_size({'width': 1920, 'height': 1080})
         try:
             for page in self.context.pages:
+                if 'offscreen' in page.url:
+                    continue
                 if page != self.page:
                     await page.close()
+
         except Exception as e:
             logger.error(f"{self.profile_number}: Ошибка при закрытии страниц: {e}")
             raise e
