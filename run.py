@@ -35,7 +35,7 @@ async def main():
     if config.shuffle_profiles:
         shuffle(accounts_for_work)
 
-    tasks = [worker(account) for account in config.accounts if account.profile_number > 608]
+    tasks = [worker(account) for account in accounts_for_work]
     await asyncio.gather(*tasks, return_exceptions=True)
     await close_database()
 
