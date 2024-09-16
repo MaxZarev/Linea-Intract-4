@@ -74,7 +74,6 @@ class Bot:
         :return:
         """
         await self.open_interact()
-
         for quest in quests:
             await self.check_status(quest.number, quest.text)
 
@@ -129,6 +128,7 @@ class Bot:
                 if not await Accounts.get_status(self.ads.profile_number, quest_number):
                     await self.nile.stake()
                     await self.interact_quest(quest_number, quest_text)
+
         except Exception as e:
             logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квеста {quest_number} {e}")
             raise e
@@ -138,11 +138,19 @@ class Bot:
         Открывает сайт interact.io и подключает кошелек метамаск.
         :return: None
         """
-        try:
-            await self.ads.page.goto('https://www.intract.io/quest/66bb5618c8ff56cba848ea8f')
-        except Exception:
-            await self.open_interact()
-        await random_sleep(3, 5)
+
+        for attempt in range(10):
+            try:
+                await self.ads.page.goto('https://www.intract.io/quest/66bb5618c8ff56cba848ea8f',
+                                         wait_until='load', timeout=10000)
+                break
+            except Exception:
+                if attempt == 9:
+                    raise Exception(f"{self.ads.profile_number} Не удалось открыть сайт interact.io")
+
+                logger.warning(
+                    f"{self.ads.profile_number}: Не удалось нормально открыть сайт interact.io, пробуем еще раз")
+                await random_sleep(3, 5)
 
         if await self.ads.page.get_by_text('Sign In').count():
             logger.info(f"{self.ads.profile_number}: Запускаем подключение кошелька")
@@ -158,38 +166,47 @@ class Bot:
                 await confirm_button.click()
                 await asyncio.sleep(5)
 
-    async def interact_quest(self, quest_number: int, quest_text: str) -> None:
+    async def interact_quest(self, quest_number: int, quest_text: str) -> bool:
         """
         Прокликивает задание на Zerolend
         :return:
         """
         if await Accounts.get_status(self.ads.profile_number, quest_number):
-            return
+            return True
 
         logger.info(f"{self.ads.profile_number}: Пробуем пройти квест на interact {quest_number}")
         await self.open_interact()
 
         if await self.check_status(quest_number, quest_text):
             logger.info(f"{self.ads.profile_number}: Квест {quest_number} пройден")
-            return
+            return True
 
-        await self.ads.page.get_by_text(quest_text).scroll_into_view_if_needed()
-        await self.ads.page.get_by_text(quest_text).click()
+        await self.ads.page.get_by_text(quest_text).scroll_into_view_if_needed(timeout=10000)
+        await self.ads.page.get_by_text(quest_text).click(timeout=10000)
         await random_sleep(3, 5)
         await self.ads.page.locator('div.modal-dialog:visible').get_by_role('button').filter(
-            has_not_text='Continue', has=self.ads.page.locator('i')).first.click()
+            has_not_text='Continue', has=self.ads.page.locator('i')).first.click(timeout=10000)
         verify_button = self.ads.page.get_by_role('button', name='Verify')
-        await verify_button.scroll_into_view_if_needed()
-        await verify_button.click()
+
+        await verify_button.scroll_into_view_if_needed(timeout=10000)
+        await verify_button.click(timeout=10000)
 
         await random_sleep(5, 10)
-        if await self.ads.page.get_by_role('heading', name='Choose primary wallet').count() > 0:
-            await self.ads.page.locator('div.tab-link-text:visible').click()
-            await self.ads.page.get_by_role('button', name='Confirm').click()
+        if await self.ads.page.get_by_role('heading', name='Choose primary wallet').count():
+            await self.ads.page.locator('div.tab-link-text:visible').click(timeout=10000)
+            await self.ads.page.get_by_role('button', name='Confirm').click(timeout=10000)
             await random_sleep(3, 5)
-            await verify_button.click()
+            await verify_button.click(timeout=10000)
             await random_sleep(5, 10)
-        await self.interact_quest(quest_number, quest_text)
+
+        if await self.check_status(quest_number, quest_text):
+            logger.info(f"{self.ads.profile_number}: Квест {quest_number} пройден")
+            return True
+
+        raise Exception(f"{self.ads.profile_number}: Квест {quest_number} не пройден")
+
+
+
 
     async def check_status(self, quest_number: int, quest_text: str) -> bool:
         """

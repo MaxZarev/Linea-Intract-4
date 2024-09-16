@@ -10,14 +10,17 @@ from models import Account
 from database import Accounts
 from utils import setup
 
+
 async def worker(account: Account):
     async with semaphore:
         logger.info(f'{account.profile_number}: Запуск аккаунта')
         try:
             async with Bot(account) as bot:
-                await bot.run()
+                await asyncio.wait_for(bot.run(), timeout=900)
+        except asyncio.TimeoutError:
+            logger.error(f'{account.profile_number}: Превышено время выполнения')
         except Exception as e:
-                logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
+            logger.error(f'{account.profile_number}: Ошибка в аккаунте {e}')
 
 
 async def main():
@@ -29,7 +32,8 @@ async def main():
     await initialize_database()
 
     complete_accounts = await Accounts.get_complete_accounts()
-    accounts_for_work = [account for account in config.accounts if account.profile_number not in complete_accounts]
+    accounts_for_work = [account for account in config.accounts if
+                         account.profile_number not in complete_accounts]
 
     print(f'Всего аккаунтов: {len(config.accounts)}')
     print(f'Завершенные аккаунты: {len(complete_accounts)}')
