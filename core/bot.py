@@ -151,7 +151,7 @@ class Bot:
         for attempt in range(10):
             try:
                 await self.ads.page.goto('https://www.intract.io/quest/66bb5618c8ff56cba848ea8f',
-                                         wait_until='load', timeout=20000)
+                                         wait_until='load', timeout=30000)
                 break
             except Exception:
                 if attempt == 9:
