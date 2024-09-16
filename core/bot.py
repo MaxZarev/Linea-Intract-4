@@ -156,7 +156,7 @@ class Bot:
         :return: None
         """
 
-        for attempt in range(10):
+        for attempt in range(3):
             try:
                 await self.ads.page.goto('https://www.intract.io/quest/66bb5618c8ff56cba848ea8f',
                                          wait_until='load', timeout=30000)
@@ -245,7 +245,6 @@ class Bot:
         """
         if not config.tg_token:
             return
-
         try:
             url = f"https://api.telegram.org/bot{config.tg_token}/sendMessage"
             await get_request(url, {"chat_id": config.tg_chat_id, "text": message})
