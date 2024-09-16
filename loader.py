@@ -1,3 +1,6 @@
+import asyncio
+
+
 class SingletonMeta(type):
     """Метакласс для создания синглтонов"""
     _instances = {}
@@ -11,9 +14,16 @@ class SingletonMeta(type):
 
 class ConfigSingleton(metaclass=SingletonMeta):
     """Создание конфига в одном экземпляре"""
+
     def __init__(self):
-        from utils import load_config
+        from utils import load_config, create_w3
         self.config = load_config()
+        self.w3 = create_w3(self.config.rpc_linea)
+        self.semaphore = asyncio.Semaphore(self.config.threads)
+        self.lock = asyncio.Lock()
 
 
 config = ConfigSingleton().config
+w3 = ConfigSingleton().w3
+semaphore = asyncio.Semaphore(config.threads)
+lock = asyncio.Lock()

@@ -9,12 +9,9 @@ from loguru import logger
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Locator
 
 from models import Account
-from loader import config
+from loader import config, lock
 from utils import random_sleep
-from utils.utils import get_request
-
-lock = asyncio.Lock()
-
+from utils import get_request
 
 class Ads:
     local_api_url = "http://local.adspower.net:50325/api/v1/"

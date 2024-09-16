@@ -1,7 +1,7 @@
 import asyncio
 from random import shuffle
 
-from loader import config
+from loader import config, semaphore
 
 from database import initialize_database, close_database
 from loguru import logger
@@ -9,9 +9,6 @@ from core.bot import Bot
 from models import Account
 from database import Accounts
 from utils import setup
-
-semaphore = asyncio.Semaphore(config.threads)
-
 
 async def worker(account: Account):
     async with semaphore:
@@ -24,7 +21,7 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Версия скрипта 1.2.3')
+    print('Версия скрипта 1.2.4')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')

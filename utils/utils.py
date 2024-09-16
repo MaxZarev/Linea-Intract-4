@@ -5,10 +5,12 @@ import os
 from random import uniform
 
 import yaml
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from requests import get
 from better_proxy import Proxy
 from loguru import logger
+from web3 import AsyncWeb3, AsyncHTTPProvider
+from web3.eth import AsyncEth
 
 from models import Account, Config
 
@@ -86,7 +88,7 @@ def get_accounts() -> list[Account]:
 
 def load_config() -> Config:
     """
-    Загружает конфигурацию из файла settings.yaml, создает список аккаунтов и возвращает объект Config
+    Загружает конфигурацию из файла settings.yaml, создает список аккаунтов, создает объект w3 и возвращает объект Config
     :return: объект Config
     """
     settings = read_file(CONFIG_PARAMS, is_yaml=True)
@@ -94,6 +96,19 @@ def load_config() -> Config:
     config = Config(accounts=accounts, **settings)
     return config
 
+
+def create_w3(rpc) -> AsyncWeb3:
+    """
+    Создает объект w3 для работы с блокчейном
+    :return: объект w3
+    """
+    w3 = AsyncWeb3(
+        provider=AsyncHTTPProvider(
+            endpoint_uri=rpc,
+        ),
+        modules={'eth': (AsyncEth,)},
+    )
+    return w3
 
 def random_amount(min_n: float, max_n: float, round_n: int = 4) -> float:
     """
@@ -125,12 +140,12 @@ async def get_request(url: str, params: dict = None) -> dict:
     :param params: параметры
     :return: ответ
     """
-
-    async with ClientSession() as session:
+    timeout = ClientTimeout(total=20)
+    async with ClientSession(timeout=timeout) as session:
         async with session.get(url, params=params) as response:
+            response.raise_for_status()
             data = await response.json()
             return data
-
 
 def get_eth_price() -> float:
     """

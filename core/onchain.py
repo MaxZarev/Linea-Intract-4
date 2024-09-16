@@ -6,13 +6,11 @@ import random
 from typing import Optional
 
 from loguru import logger
-from web3 import AsyncWeb3
 from web3.contract import AsyncContract
-from web3.eth import AsyncEth
 from web3.types import TxParams, TxReceipt, Wei
 
 from core.okx_client import OKX
-from loader import config
+from loader import config, w3
 from models import ContractTemp, Account, Amount
 from utils import random_amount, random_sleep
 
@@ -25,12 +23,7 @@ class Onchain:
         self.profile_number = account.profile_number
         self.private_key = account.private_key
         self.withdraw_address = account.withdraw_address
-        self.w3: AsyncWeb3 = AsyncWeb3(
-            provider=AsyncWeb3.AsyncHTTPProvider(
-                endpoint_uri=config.rpc_linea,
-            ),
-            modules={'eth': (AsyncEth,)},
-        )
+        self.w3 = w3
         self.address = self.w3.eth.account.from_key(account.private_key).address
         if config.is_withdraw_to_wallet:
             self.okx = OKX(account)

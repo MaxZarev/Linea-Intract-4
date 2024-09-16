@@ -11,6 +11,7 @@ from utils import random_sleep
 
 from loguru import logger
 
+
 class Bot:
 
     def __init__(self, account: Account):
@@ -93,7 +94,6 @@ class Bot:
                 logger.error(f"{self.ads.profile_number}: Ошибка при выполнении квестов {e}")
                 if attempt == 2:
                     raise e
-
 
     async def run_quest(self, quest_number: int, quest_text: str) -> None:
         """
@@ -182,12 +182,13 @@ class Bot:
         await verify_button.scroll_into_view_if_needed()
         await verify_button.click()
 
-        await random_sleep(3, 5)
+        await random_sleep(5, 10)
         if await self.ads.page.get_by_role('heading', name='Choose primary wallet').count() > 0:
             await self.ads.page.locator('div.tab-link-text:visible').click()
             await self.ads.page.get_by_role('button', name='Confirm').click()
             await random_sleep(3, 5)
             await verify_button.click()
+            await random_sleep(5, 10)
         await self.interact_quest(quest_number, quest_text)
 
     async def check_status(self, quest_number: int, quest_text: str) -> bool:
