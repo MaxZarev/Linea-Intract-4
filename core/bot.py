@@ -56,6 +56,15 @@ class Bot:
             await self.onchain.withdraw_to_cex()
 
         logger.success(f"{self.ads.profile_number}: Все квесты выполнены")
+        # await get_request(f"/send_message", {
+        #     "chat_id": config.telegram_chat_id,
+        #     "mesage": f"Аккаунт {self.ads.profile_number} выполнил все квест
+        # #
+        # # requests.post(f"https://api.telegram.org/bot{config.TG_TOKEN}/sendMessage", json={
+        # #     "chat_id": ,
+        # #     "text": message
+        # # })
+        
 
     async def shuffle_quest(self, quests: list[Quest]) -> None:
         """
@@ -142,7 +151,7 @@ class Bot:
         for attempt in range(10):
             try:
                 await self.ads.page.goto('https://www.intract.io/quest/66bb5618c8ff56cba848ea8f',
-                                         wait_until='load', timeout=10000)
+                                         wait_until='load', timeout=20000)
                 break
             except Exception:
                 if attempt == 9:
