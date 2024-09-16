@@ -4,7 +4,6 @@ from random import shuffle
 from loader import config, semaphore
 
 from database import initialize_database, close_database
-from loguru import logger
 from core.bot import Bot
 from models import Account
 from database import Accounts
