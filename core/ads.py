@@ -42,7 +42,7 @@ class Ads:
         try:
             self.browser = await self._start_browser()
             self.context = self.browser.contexts[0]
-            self.page = self.context.pages[0]
+            self.page = await self.context.new_page()
             await self._prepare_browser()
         except Exception as e:
             logger.error(f"{self.profile_number}: Ошибка при запуске и настройке браузера: {e}")
@@ -111,6 +111,7 @@ class Ads:
         """
         # todo: провести тесты смены разрешения экрана
         # await self.page.set_viewport_size({'width': 1920, 'height': 1080})
+
         try:
             for page in self.context.pages:
                 if 'offscreen' in page.url:
