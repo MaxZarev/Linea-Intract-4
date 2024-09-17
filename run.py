@@ -17,7 +17,7 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Тестовый билд 2')
+    print('Версия скрипта 1.3.0')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
