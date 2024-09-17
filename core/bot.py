@@ -162,7 +162,7 @@ class Bot:
                                          wait_until='load', timeout=30000)
                 break
             except Exception:
-                if attempt == 9:
+                if attempt == 2:
                     raise Exception(f"{self.ads.profile_number} Не удалось открыть сайт interact.io")
 
                 logger.warning(
