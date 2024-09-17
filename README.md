@@ -3,7 +3,7 @@
 
 Вопросы: https://t.me/max_zarev
 
-Chanel: https://t.me/maxzarev 
+Channel: https://t.me/maxzarev 
 
 Donate: 0xAC8ce8fbC80115a22a9a69e42F50713AAe9ef2F7
 
