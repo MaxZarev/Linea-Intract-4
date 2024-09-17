@@ -23,7 +23,5 @@ link_change_ip: "" # ссылка смены ip моб. прокси
 is_withdraw_to_cex: true # выводить ли ETH на CEX true/false
 min_balance: [0.002, 0.003] # минимальный баланс ETH оставляемый на кошельке
 
-
-
-tg_token: "" # создаем бота в @BotFather
-tg_chat_id: "" # узнать можно в телеграм в боте @getmyid_bot
+tg_token: "" # апи токен телеграм бота - создаем бота в @BotFather
+tg_chat_id: "" # ваш чат айди - узнать в телеграм в боте @getmyid_bot
