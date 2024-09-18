@@ -1,5 +1,6 @@
 import sys
 
+import urllib3
 from loguru import logger
 
 
@@ -8,6 +9,9 @@ def setup():
     Настройка логгера
     :return:
     """
+
+    urllib3.disable_warnings()
+
     logger.remove()
     logger.add(
         sys.stdout,
