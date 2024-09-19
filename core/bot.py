@@ -65,14 +65,6 @@ class Bot:
         if config.is_withdraw_to_cex:
             await self.onchain.withdraw_to_cex()
 
-        # await get_request(f"/send_message", {
-        #     "chat_id": config.telegram_chat_id,
-        #     "mesage": f"Аккаунт {self.ads.profile_number} выполнил все квест
-        # #
-        # # requests.post(f"https://api.telegram.org/bot{config.TG_TOKEN}/sendMessage", json={
-        # #     "chat_id": ,
-        # #     "text": message
-        # # })
 
     async def shuffle_quest(self, quests: list[Quest]) -> None:
         """
@@ -91,6 +83,7 @@ class Bot:
         :return:
         """
         await self.open_interact()
+        await random_sleep(5, 7)
         for quest in quests:
             await self.check_status(quest.number, quest.text)
 
@@ -193,6 +186,8 @@ class Bot:
 
         logger.info(f"{self.ads.profile_number}: Пробуем пройти квест на interact {quest_number}")
         await self.open_interact()
+
+        await random_sleep(3, 5)
 
         if await self.check_status(quest_number, quest_text):
             logger.info(f"{self.ads.profile_number}: Квест {quest_number} пройден")

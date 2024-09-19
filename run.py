@@ -17,10 +17,11 @@ async def worker(account: Account):
 
 
 async def main():
-    print('Версия скрипта 1.3.0')
+    print('Версия скрипта 1.4.0')
     print('Скрипт подготовлен Zarev')
     print('Канал https://t.me/maxzarev')
     print('Вопросы https://t.me/max_zarev')
+    print('Donate: 0xAC8ce8fbC80115a22a9a69e42F50713AAe9ef2F7')
 
     await initialize_database()
 
